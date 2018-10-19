@@ -92,8 +92,8 @@ public class BasicOpMode_Linear extends LinearOpMode
 		// run until the end of the match (driver presses STOP)
 		while (opModeIsActive())
 		{
-			double drive = -gamepad1.left_stick_y;
-			double turn = gamepad1.left_stick_x;
+			double drive = -gamepad1.left_stick_y / 2;
+			double turn = -gamepad1.left_stick_x / 2;
 			double leftPower = Range.clip(drive + turn, -1.0, 1.0);
 			double rightPower = Range.clip(drive - turn, -1.0, 1.0);
 			leftDrive.setPower(leftPower);
