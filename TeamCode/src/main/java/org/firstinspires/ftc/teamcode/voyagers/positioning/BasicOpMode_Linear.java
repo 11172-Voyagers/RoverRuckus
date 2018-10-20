@@ -32,7 +32,6 @@ package org.firstinspires.ftc.teamcode.voyagers.positioning;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -56,10 +55,10 @@ public class BasicOpMode_Linear extends LinearOpMode
 	private ElapsedTime runtime = new ElapsedTime();
 	private DcMotor leftDrive;
 	private DcMotor rightDrive;
-	private DcMotor arm;
-	private Servo claw;
 	private DcMotor leftLinear;
 	private DcMotor rightLinear;
+	private DcMotor leftArm;
+	private DcMotor rightArm;
 
 	@Override
 	public void runOpMode()
@@ -74,16 +73,17 @@ public class BasicOpMode_Linear extends LinearOpMode
 		rightDrive = hardwareMap.get(DcMotor.class, "rightDrive");
 		leftLinear = hardwareMap.get(DcMotor.class, "leftLinear");
 		rightLinear = hardwareMap.get(DcMotor.class, "rightLinear");
-
-		claw = hardwareMap.get(Servo.class, "claw");
+		leftArm = hardwareMap.get(DcMotor.class, "leftArm");
+		rightArm = hardwareMap.get(DcMotor.class, "rightArm");
 
 		// Most robots need the motor on one side to be reversed to drive forward
 		// Reverse the motor that runs backwards when connected directly to the battery
 		leftDrive.setDirection(DcMotor.Direction.FORWARD);
 		rightDrive.setDirection(DcMotor.Direction.REVERSE);
-		//arm.setDirection(DcMotor.Direction.FORWARD);
 		leftLinear.setDirection(DcMotor.Direction.FORWARD);
 		rightLinear.setDirection(DcMotor.Direction.REVERSE);
+		leftArm.setDirection(DcMotor.Direction.FORWARD);
+		rightArm.setDirection(DcMotor.Direction.REVERSE);
 
 		// Wait for the game to start (driver presses PLAY)
 		waitForStart();
@@ -99,7 +99,11 @@ public class BasicOpMode_Linear extends LinearOpMode
 			leftDrive.setPower(leftPower);
 			rightDrive.setPower(rightPower);
 
-			double linear = -gamepad1.right_stick_y;
+			double arm = -gamepad1.right_stick_y;
+			leftArm.setPower(arm);
+			rightArm.setPower(arm);
+
+			double linear = gamepad1.dpad_up ? 1 : (gamepad1.dpad_down ? -1 : 0);
 			leftLinear.setPower(linear);
 			rightLinear.setPower(linear);
 
