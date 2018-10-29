@@ -18,6 +18,10 @@ public class Beam
 	public static void it(String title, Object message)
 	{
 		telemetry.addData(title, message);
+	}
+
+	public static void flush()
+	{
 		telemetry.update();
 	}
 }

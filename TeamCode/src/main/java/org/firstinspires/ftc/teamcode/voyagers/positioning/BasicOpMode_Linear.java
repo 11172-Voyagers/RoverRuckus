@@ -31,9 +31,12 @@ package org.firstinspires.ftc.teamcode.voyagers.positioning;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+import org.firstinspires.ftc.teamcode.voyagers.util.Beam;
 
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -59,12 +62,18 @@ public class BasicOpMode_Linear extends LinearOpMode
 	private DcMotor rightLinear;
 	private DcMotor leftArm;
 	private DcMotor rightArm;
+	private Servo leftGrip;
+	private Servo rightGrip;
+	private CRServo leftArmLinear;
+	private CRServo rightArmLinear;
 
 	@Override
 	public void runOpMode()
 	{
 		telemetry.addData("Status", "Initialized");
 		telemetry.update();
+
+		Beam.init(this.telemetry);
 
 		// Initialize the hardware variables. Note that the strings used here as parameters
 		// to 'get' must correspond to the names assigned during the robot configuration
@@ -75,6 +84,10 @@ public class BasicOpMode_Linear extends LinearOpMode
 		rightLinear = hardwareMap.get(DcMotor.class, "rightLinear");
 		leftArm = hardwareMap.get(DcMotor.class, "leftArm");
 		rightArm = hardwareMap.get(DcMotor.class, "rightArm");
+		leftGrip = hardwareMap.get(Servo.class, "leftGrip");
+		rightGrip = hardwareMap.get(Servo.class, "rightGrip");
+		leftArmLinear = hardwareMap.get(CRServo.class, "leftArmLinear");
+		rightArmLinear = hardwareMap.get(CRServo.class, "rightArmLinear");
 
 		// Most robots need the motor on one side to be reversed to drive forward
 		// Reverse the motor that runs backwards when connected directly to the battery
@@ -85,6 +98,9 @@ public class BasicOpMode_Linear extends LinearOpMode
 		leftArm.setDirection(DcMotor.Direction.FORWARD);
 		rightArm.setDirection(DcMotor.Direction.REVERSE);
 
+		leftArmLinear.setDirection(CRServo.Direction.FORWARD);
+		rightArmLinear.setDirection(CRServo.Direction.REVERSE);
+
 		// Wait for the game to start (driver presses PLAY)
 		waitForStart();
 		runtime.reset();
@@ -92,25 +108,42 @@ public class BasicOpMode_Linear extends LinearOpMode
 		// run until the end of the match (driver presses STOP)
 		while (opModeIsActive())
 		{
-			double drive = -gamepad1.left_stick_y / 2;
-			double turn = -gamepad1.left_stick_x / 2;
+			double scale = (gamepad1.right_trigger > 0.5 ? 2 : gamepad1.left_trigger > 0.5 ? 0.5 : 1);
+			double drive = scale * 0.45 * gamepad1.left_stick_y;
+			double turn = scale * 0.35 * -gamepad1.left_stick_x;
+
 			double leftPower = Range.clip(drive + turn, -1.0, 1.0);
 			double rightPower = Range.clip(drive - turn, -1.0, 1.0);
 			leftDrive.setPower(leftPower);
 			rightDrive.setPower(rightPower);
 
-			double arm = -gamepad1.right_stick_y;
+			double arm = -gamepad2.right_stick_y / 1.5;
 			leftArm.setPower(arm);
 			rightArm.setPower(arm);
 
-			double linear = gamepad1.dpad_up ? 1 : (gamepad1.dpad_down ? -1 : 0);
+			double linear = gamepad1.dpad_up ? -1 : (gamepad1.dpad_down ? 1 : 0);
+			linear += gamepad2.dpad_up ? -1 : (gamepad2.dpad_down ? 1 : 0);
 			leftLinear.setPower(linear);
 			rightLinear.setPower(linear);
 
-			// Show the elapsed game time and wheel power.
-			telemetry.addData("Status", "Run Time: " + runtime.toString());
-			telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
-			telemetry.update();
+			double leftGripPosition = Range.clip(gamepad2.left_trigger * 10, 0, 1);
+			double rightGripPosition = Range.clip(gamepad2.right_trigger * 10, 0, 1);
+
+			leftGrip.setPosition(1 - leftGripPosition);
+			rightGrip.setPosition(rightGripPosition);
+
+			double armLinear = gamepad2.left_bumper ? -1 : (gamepad2.right_bumper ? 1 : 0);
+			leftArmLinear.setPower(armLinear);
+			rightArmLinear.setPower(armLinear);
+
+			Beam.it("leftPower", leftPower);
+			Beam.it("rightPower", rightPower);
+			Beam.it("arm", arm);
+			Beam.it("linear", linear);
+			Beam.it("leftGripPosition", leftGripPosition);
+			Beam.it("rightGripPosition", rightGripPosition);
+			Beam.it("armLinear", armLinear);
+			Beam.flush();
 		}
 	}
 }
