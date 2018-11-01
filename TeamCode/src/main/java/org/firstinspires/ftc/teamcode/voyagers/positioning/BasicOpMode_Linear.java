@@ -31,12 +31,14 @@ package org.firstinspires.ftc.teamcode.voyagers.positioning;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.teamcode.voyagers.util.Beam;
+import org.firstinspires.ftc.teamcode.voyagers.util.MiniPID;
 
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -58,6 +60,8 @@ public class BasicOpMode_Linear extends LinearOpMode
 	private ElapsedTime runtime = new ElapsedTime();
 	private DcMotor leftDrive;
 	private DcMotor rightDrive;
+	private DcMotor leftFrontDrive;
+	private DcMotor rightFrontDrive;
 	private DcMotor leftLinear;
 	private DcMotor rightLinear;
 	private DcMotor leftArm;
@@ -66,6 +70,8 @@ public class BasicOpMode_Linear extends LinearOpMode
 	private Servo rightGrip;
 	private CRServo leftArmLinear;
 	private CRServo rightArmLinear;
+
+	private AnalogInput armPot;
 
 	@Override
 	public void runOpMode()
@@ -78,8 +84,10 @@ public class BasicOpMode_Linear extends LinearOpMode
 		// Initialize the hardware variables. Note that the strings used here as parameters
 		// to 'get' must correspond to the names assigned during the robot configuration
 		// step (using the FTC Robot Controller app on the phone).
-		leftDrive = hardwareMap.get(DcMotor.class, "leftDrive");
-		rightDrive = hardwareMap.get(DcMotor.class, "rightDrive");
+		leftDrive = hardwareMap.get(DcMotor.class, "left_back_drive");
+		rightDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
+		leftFrontDrive = hardwareMap.get(DcMotor.class, "left_forward_drive");
+		rightFrontDrive = hardwareMap.get(DcMotor.class, "right_forward_drive");
 		leftLinear = hardwareMap.get(DcMotor.class, "leftLinear");
 		rightLinear = hardwareMap.get(DcMotor.class, "rightLinear");
 		leftArm = hardwareMap.get(DcMotor.class, "leftArm");
@@ -89,10 +97,14 @@ public class BasicOpMode_Linear extends LinearOpMode
 		leftArmLinear = hardwareMap.get(CRServo.class, "leftArmLinear");
 		rightArmLinear = hardwareMap.get(CRServo.class, "rightArmLinear");
 
+		armPot = hardwareMap.get(AnalogInput.class, "armPot");
+
 		// Most robots need the motor on one side to be reversed to drive forward
 		// Reverse the motor that runs backwards when connected directly to the battery
 		leftDrive.setDirection(DcMotor.Direction.FORWARD);
 		rightDrive.setDirection(DcMotor.Direction.REVERSE);
+		leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
+		rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
 		leftLinear.setDirection(DcMotor.Direction.FORWARD);
 		rightLinear.setDirection(DcMotor.Direction.REVERSE);
 		leftArm.setDirection(DcMotor.Direction.FORWARD);
@@ -105,29 +117,44 @@ public class BasicOpMode_Linear extends LinearOpMode
 		waitForStart();
 		runtime.reset();
 
+		double armStraightUp = 0.9;
+		double armStraightDown = 2.45;
+
+		MiniPID miniPID = new MiniPID(1.9, 0, 0);
+		miniPID.setOutputRampRate(0.2);
+		miniPID.setOutputLimits(1);
+		miniPID.setSetpointRange(1);
+		miniPID.setSetpoint(armStraightDown);
+
 		// run until the end of the match (driver presses STOP)
 		while (opModeIsActive())
 		{
 			double scale = (gamepad1.right_trigger > 0.5 ? 2 : gamepad1.left_trigger > 0.5 ? 0.5 : 1);
 			double drive = scale * 0.45 * gamepad1.left_stick_y;
-			double turn = scale * 0.35 * -gamepad1.left_stick_x;
+			double turn = scale * 0.35 * -gamepad1.right_stick_x;
 
+			int fb = (gamepad1.right_trigger > 0.0 ? 1 : -1);
 			double leftPower = Range.clip(drive + turn, -1.0, 1.0);
 			double rightPower = Range.clip(drive - turn, -1.0, 1.0);
-			leftDrive.setPower(leftPower);
-			rightDrive.setPower(rightPower);
+			double leftFPower = Range.clip(drive * -1 * fb + turn, -1.0, 1.0);
+			double rightFPower = Range.clip(drive * -1 * fb - turn, -1.0, 1.0);
+			leftDrive.setPower(leftPower * fb);
+			rightDrive.setPower(rightPower * fb);
+			leftFrontDrive.setPower(leftFPower);
+			rightFrontDrive.setPower(rightFPower);
 
-			double arm = -gamepad2.right_stick_y / 1.5;
-			leftArm.setPower(arm);
-			rightArm.setPower(arm);
+			double arm = Math.abs(gamepad2.right_stick_y) * (armStraightUp - armStraightDown) + armStraightDown;
+			double armPower = miniPID.getOutput(armPot.getVoltage(), arm);
+			leftArm.setPower(-armPower);
+			rightArm.setPower(-armPower);
 
 			double linear = gamepad1.dpad_up ? -1 : (gamepad1.dpad_down ? 1 : 0);
 			linear += gamepad2.dpad_up ? -1 : (gamepad2.dpad_down ? 1 : 0);
 			leftLinear.setPower(linear);
 			rightLinear.setPower(linear);
 
-			double leftGripPosition = Range.clip(gamepad2.left_trigger * 10, 0, 1);
-			double rightGripPosition = Range.clip(gamepad2.right_trigger * 10, 0, 1);
+			double leftGripPosition = Range.clip(gamepad2.left_trigger, 0.38, 0.65);
+			double rightGripPosition = Range.clip(gamepad2.right_trigger, 0, 0.55);
 
 			leftGrip.setPosition(1 - leftGripPosition);
 			rightGrip.setPosition(rightGripPosition);
@@ -143,6 +170,7 @@ public class BasicOpMode_Linear extends LinearOpMode
 			Beam.it("leftGripPosition", leftGripPosition);
 			Beam.it("rightGripPosition", rightGripPosition);
 			Beam.it("armLinear", armLinear);
+			Beam.it("armPot", armPot.getVoltage());
 			Beam.flush();
 		}
 	}
