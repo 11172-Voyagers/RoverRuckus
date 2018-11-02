@@ -118,13 +118,14 @@ public class BasicOpMode_Linear extends LinearOpMode
 		runtime.reset();
 
 		double armStraightUp = 0.9;
-		double armStraightDown = 2.45;
+		double armStraightDown = 2.46;
 
-		MiniPID miniPID = new MiniPID(1.9, 0, 0);
-		miniPID.setOutputRampRate(0.2);
+		MiniPID miniPID = new MiniPID(1.4, 0, 0.3);
 		miniPID.setOutputLimits(1);
 		miniPID.setSetpointRange(1);
 		miniPID.setSetpoint(armStraightDown);
+
+		double arm = armStraightDown;
 
 		// run until the end of the match (driver presses STOP)
 		while (opModeIsActive())
@@ -143,10 +144,14 @@ public class BasicOpMode_Linear extends LinearOpMode
 			leftFrontDrive.setPower(leftFPower);
 			rightFrontDrive.setPower(rightFPower);
 
-			double arm = Math.abs(gamepad2.right_stick_y) * (armStraightUp - armStraightDown) + armStraightDown;
-			double armPower = miniPID.getOutput(armPot.getVoltage(), arm);
-			leftArm.setPower(-armPower);
-			rightArm.setPower(-armPower);
+			arm += gamepad2.right_stick_y / 100;
+
+			if (!gamepad2.x)
+			{
+				double armPower = miniPID.getOutput(armPot.getVoltage(), arm);
+				leftArm.setPower(-armPower);
+				rightArm.setPower(-armPower);
+			}
 
 			double linear = gamepad1.dpad_up ? -1 : (gamepad1.dpad_down ? 1 : 0);
 			linear += gamepad2.dpad_up ? -1 : (gamepad2.dpad_down ? 1 : 0);
