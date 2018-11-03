@@ -73,6 +73,9 @@ public class BasicOpMode_Linear extends LinearOpMode
 
 	private AnalogInput armPot;
 
+	private boolean isClawMinAngleMode = false;
+	private boolean wasYPressed = false;
+
 	@Override
 	public void runOpMode()
 	{
@@ -120,19 +123,28 @@ public class BasicOpMode_Linear extends LinearOpMode
 		double armStraightUp = 0.9;
 		double armStraightDown = 2.46;
 
-		MiniPID miniPID = new MiniPID(1.4, 0, 0.3);
+		MiniPID miniPID = new MiniPID(1.4, 0, 0);
 		miniPID.setOutputLimits(1);
 		miniPID.setSetpointRange(1);
 		miniPID.setSetpoint(armStraightDown);
 
-		double arm = armStraightDown;
+		double arm = armPot.getVoltage();
+		arm = Range.clip(arm, armStraightUp, armStraightDown);
+
+		leftGrip.setPosition(0.25);
+		rightGrip.setPosition(0.65);
 
 		// run until the end of the match (driver presses STOP)
 		while (opModeIsActive())
 		{
 			double scale = (gamepad1.right_trigger > 0.5 ? 2 : gamepad1.left_trigger > 0.5 ? 0.5 : 1);
-			double drive = scale * 0.45 * gamepad1.left_stick_y;
-			double turn = scale * 0.35 * -gamepad1.right_stick_x;
+			double drive = scale * 0.45 * -gamepad1.left_stick_y;
+			double turn = scale * 0.35 * gamepad1.right_stick_x;
+
+			if (gamepad2.y && !wasYPressed)
+				isClawMinAngleMode = !isClawMinAngleMode;
+
+			wasYPressed = gamepad2.y;
 
 			int fb = (gamepad1.right_trigger > 0.0 ? 1 : -1);
 			double leftPower = Range.clip(drive + turn, -1.0, 1.0);
@@ -144,22 +156,28 @@ public class BasicOpMode_Linear extends LinearOpMode
 			leftFrontDrive.setPower(leftFPower);
 			rightFrontDrive.setPower(rightFPower);
 
-			arm += gamepad2.right_stick_y / 100;
+			double armPower = 0;
 
-			if (!gamepad2.x)
+			if (gamepad2.dpad_up)
+				arm += 1.0 / 140;
+			else if (gamepad2.dpad_down)
+				arm -= 1.0 / 40;
+
+			if (gamepad2.dpad_up || gamepad2.dpad_down || gamepad2.x)
 			{
-				double armPower = miniPID.getOutput(armPot.getVoltage(), arm);
-				leftArm.setPower(-armPower);
-				rightArm.setPower(-armPower);
+				arm = Range.clip(arm, armStraightUp, armStraightDown);
+				armPower = miniPID.getOutput(armPot.getVoltage(), arm);
 			}
 
+			leftArm.setPower(-armPower);
+			rightArm.setPower(-armPower);
+
 			double linear = gamepad1.dpad_up ? -1 : (gamepad1.dpad_down ? 1 : 0);
-			linear += gamepad2.dpad_up ? -1 : (gamepad2.dpad_down ? 1 : 0);
 			leftLinear.setPower(linear);
 			rightLinear.setPower(linear);
 
-			double leftGripPosition = Range.clip(gamepad2.left_trigger, 0.38, 0.65);
-			double rightGripPosition = Range.clip(gamepad2.right_trigger, 0, 0.55);
+			double leftGripPosition = Range.clip(1 - gamepad2.left_trigger, 0.38, isClawMinAngleMode ? 0.75 : 0.68);
+			double rightGripPosition = Range.clip(1 - gamepad2.right_trigger, 0, isClawMinAngleMode ? 0.65 : 0.60);
 
 			leftGrip.setPosition(1 - leftGripPosition);
 			rightGrip.setPosition(rightGripPosition);
@@ -170,12 +188,15 @@ public class BasicOpMode_Linear extends LinearOpMode
 
 			Beam.it("leftPower", leftPower);
 			Beam.it("rightPower", rightPower);
+			Beam.it("leftFrontPower", leftFPower);
+			Beam.it("rightFrontPower", rightFPower);
+			Beam.it("linearPower", linear);
+			Beam.it("armLinearPower", armLinear);
 			Beam.it("arm", arm);
-			Beam.it("linear", linear);
+			Beam.it("armPot", armPot.getVoltage());
+			Beam.it("armPower", armPower);
 			Beam.it("leftGripPosition", leftGripPosition);
 			Beam.it("rightGripPosition", rightGripPosition);
-			Beam.it("armLinear", armLinear);
-			Beam.it("armPot", armPot.getVoltage());
 			Beam.flush();
 		}
 	}

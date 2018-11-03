@@ -31,6 +31,7 @@ package org.firstinspires.ftc.teamcode.voyagers.positioning;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
@@ -73,26 +74,82 @@ import org.firstinspires.ftc.teamcode.voyagers.util.FieldMarkers;
 public class VuNav extends LinearOpMode
 {
 	public static final String TAG = "Vuforia Navigation Sample";
+	private DcMotor leftDrive;
+	private DcMotor rightDrive;
+	private DcMotor leftFrontDrive;
+	private DcMotor rightFrontDrive;
+	private DcMotor leftLinear;
+	private DcMotor rightLinear;
 
 	@Override
 	public void runOpMode()
 	{
 		Voyagers.initOpMode(TAG, this);
 
-		Beam.it(">", "Press Play to start tracking");
+		telemetry.addData("Status", "Initialized");
+		telemetry.update();
+
+		Beam.init(this.telemetry);
+
+		// Initialize the hardware variables. Note that the strings used here as parameters
+		// to 'get' must correspond to the names assigned during the robot configuration
+		// step (using the FTC Robot Controller app on the phone).
+		leftDrive = hardwareMap.get(DcMotor.class, "left_back_drive");
+		rightDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
+		leftFrontDrive = hardwareMap.get(DcMotor.class, "left_forward_drive");
+		rightFrontDrive = hardwareMap.get(DcMotor.class, "right_forward_drive");
+		leftLinear = hardwareMap.get(DcMotor.class, "leftLinear");
+		rightLinear = hardwareMap.get(DcMotor.class, "rightLinear");
+
+		leftDrive.setDirection(DcMotor.Direction.FORWARD);
+		rightDrive.setDirection(DcMotor.Direction.REVERSE);
+		leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
+		rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+		leftLinear.setDirection(DcMotor.Direction.FORWARD);
+		rightLinear.setDirection(DcMotor.Direction.REVERSE);
 
 		waitForStart();
 
 		FieldMarkers.startTracking();
 
+		long startTime = System.currentTimeMillis();
+
 		while (opModeIsActive())
 		{
 			OpenGLMatrix lastLocation = FieldMarkers.getLocation(telemetry);
 
-			if (lastLocation != null)
-				Beam.it("Pos", FieldMarkers.formatMatrix(lastLocation));
+			//			if (lastLocation != null)
+			//				Beam.it("Pos", FieldMarkers.formatMatrix(lastLocation));
+			//			else
+			//				Beam.it("Pos", "Unknown");
+
+			if (System.currentTimeMillis() - startTime < 5600)
+			{
+				leftLinear.setPower(-1);
+				rightLinear.setPower(-1);
+			}
 			else
-				Beam.it("Pos", "Unknown");
+			{
+				leftLinear.setPower(0);
+				rightLinear.setPower(0);
+			}
+
+			if (System.currentTimeMillis() - startTime > 5600 && System.currentTimeMillis() - startTime < 6200)
+			{
+				leftFrontDrive.setPower(-1);
+				rightFrontDrive.setPower(-1);
+				leftDrive.setPower(-1);
+				rightDrive.setPower(-1);
+			}
+			else
+			{
+				leftFrontDrive.setPower(0);
+				rightFrontDrive.setPower(0);
+				leftDrive.setPower(0);
+				rightDrive.setPower(0);
+			}
+
+			Beam.flush();
 		}
 	}
 }
