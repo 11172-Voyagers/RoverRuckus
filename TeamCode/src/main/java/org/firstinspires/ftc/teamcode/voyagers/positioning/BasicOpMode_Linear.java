@@ -121,7 +121,7 @@ public class BasicOpMode_Linear extends LinearOpMode
 		runtime.reset();
 
 		double armStraightUp = 0.9;
-		double armStraightDown = 2.46;
+		double armStraightDown = 2.5;
 
 		MiniPID miniPID = new MiniPID(1.4, 0, 0);
 		miniPID.setOutputLimits(1);
@@ -159,15 +159,12 @@ public class BasicOpMode_Linear extends LinearOpMode
 			double armPower = 0;
 
 			if (gamepad2.dpad_up)
-				arm += 1.0 / 140;
+				arm -= 1.0 / 110;
 			else if (gamepad2.dpad_down)
-				arm -= 1.0 / 40;
+				arm += 1.0 / 70;
 
-			if (gamepad2.dpad_up || gamepad2.dpad_down || gamepad2.x)
-			{
-				arm = Range.clip(arm, armStraightUp, armStraightDown);
-				armPower = miniPID.getOutput(armPot.getVoltage(), arm);
-			}
+			arm = Range.clip(arm, armStraightUp, armStraightDown);
+			armPower = miniPID.getOutput(armPot.getVoltage(), arm);
 
 			leftArm.setPower(-armPower);
 			rightArm.setPower(-armPower);

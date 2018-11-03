@@ -31,13 +31,14 @@ package org.firstinspires.ftc.teamcode.voyagers.positioning;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.AnalogInput;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
+import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
-import org.firstinspires.ftc.teamcode.voyagers.Voyagers;
 import org.firstinspires.ftc.teamcode.voyagers.util.Beam;
-import org.firstinspires.ftc.teamcode.voyagers.util.FieldMarkers;
+import org.firstinspires.ftc.teamcode.voyagers.util.MiniPID;
 
 /**
  * This 2016-2017 OpMode illustrates the basics of using the Vuforia localizer to determine
@@ -61,13 +62,13 @@ import org.firstinspires.ftc.teamcode.voyagers.util.FieldMarkers;
  *
  * @see VuforiaLocalizer
  * @see VuforiaTrackableDefaultListener
- * see  ftc_app/doc/tutorial/FTC_FieldCoordinateSystemDefinition.pdf
- * <p>
- * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list.
- * <p>
- * IMPORTANT: In order to use this OpMode, you need to obtain your own Vuforia license key as
- * is explained below.
+ * 		see  ftc_app/doc/tutorial/FTC_FieldCoordinateSystemDefinition.pdf
+ * 		<p>
+ * 		Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
+ * 		Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list.
+ * 		<p>
+ * 		IMPORTANT: In order to use this OpMode, you need to obtain your own Vuforia license key as
+ * 		is explained below.
  */
 
 @Autonomous(name = "Concept: Vuforia Navigation", group = "Concept")
@@ -80,11 +81,16 @@ public class VuNav extends LinearOpMode
 	private DcMotor rightFrontDrive;
 	private DcMotor leftLinear;
 	private DcMotor rightLinear;
+	private DcMotor leftArm;
+	private DcMotor rightArm;
+	private AnalogInput armPot;
+	private CRServo leftArmLinear;
+	private CRServo rightArmLinear;
 
 	@Override
 	public void runOpMode()
 	{
-		Voyagers.initOpMode(TAG, this);
+		//Voyagers.initOpMode(TAG, this);
 
 		telemetry.addData("Status", "Initialized");
 		telemetry.update();
@@ -100,6 +106,11 @@ public class VuNav extends LinearOpMode
 		rightFrontDrive = hardwareMap.get(DcMotor.class, "right_forward_drive");
 		leftLinear = hardwareMap.get(DcMotor.class, "leftLinear");
 		rightLinear = hardwareMap.get(DcMotor.class, "rightLinear");
+		leftArm = hardwareMap.get(DcMotor.class, "leftArm");
+		rightArm = hardwareMap.get(DcMotor.class, "rightArm");
+		armPot = hardwareMap.get(AnalogInput.class, "armPot");
+		leftArmLinear = hardwareMap.get(CRServo.class, "leftArmLinear");
+		rightArmLinear = hardwareMap.get(CRServo.class, "rightArmLinear");
 
 		leftDrive.setDirection(DcMotor.Direction.FORWARD);
 		rightDrive.setDirection(DcMotor.Direction.REVERSE);
@@ -107,16 +118,32 @@ public class VuNav extends LinearOpMode
 		rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
 		leftLinear.setDirection(DcMotor.Direction.FORWARD);
 		rightLinear.setDirection(DcMotor.Direction.REVERSE);
+		leftArm.setDirection(DcMotor.Direction.FORWARD);
+		rightArm.setDirection(DcMotor.Direction.REVERSE);
+		leftArmLinear.setDirection(CRServo.Direction.FORWARD);
+		rightArmLinear.setDirection(CRServo.Direction.REVERSE);
 
 		waitForStart();
 
-		FieldMarkers.startTracking();
+		//FieldMarkers.startTracking();
 
 		long startTime = System.currentTimeMillis();
+		long startTimeExtend = -1;
+
+		double armStraightUp = 0.9;
+		double armStraightDown = 2.5;
+
+		MiniPID miniPID = new MiniPID(1.4, 0, 0);
+		miniPID.setOutputLimits(1);
+		miniPID.setSetpointRange(1);
+		miniPID.setSetpoint(armStraightDown);
+
+		double arm = armPot.getVoltage();
+		arm = Range.clip(arm, armStraightUp, armStraightDown);
 
 		while (opModeIsActive())
 		{
-			OpenGLMatrix lastLocation = FieldMarkers.getLocation(telemetry);
+			//OpenGLMatrix lastLocation = FieldMarkers.getLocation(telemetry);
 
 			//			if (lastLocation != null)
 			//				Beam.it("Pos", FieldMarkers.formatMatrix(lastLocation));
@@ -134,10 +161,10 @@ public class VuNav extends LinearOpMode
 				rightLinear.setPower(0);
 			}
 
-			if (System.currentTimeMillis() - startTime > 5600 && System.currentTimeMillis() - startTime < 6200)
+			if (System.currentTimeMillis() - startTime > 5000 && System.currentTimeMillis() - startTime < 6200)
 			{
-				leftFrontDrive.setPower(-1);
-				rightFrontDrive.setPower(-1);
+				leftFrontDrive.setPower(1);
+				rightFrontDrive.setPower(1);
 				leftDrive.setPower(-1);
 				rightDrive.setPower(-1);
 			}
@@ -148,6 +175,30 @@ public class VuNav extends LinearOpMode
 				leftDrive.setPower(0);
 				rightDrive.setPower(0);
 			}
+
+			double armPower = 0;
+			arm = armStraightUp;
+			armPower = miniPID.getOutput(armPot.getVoltage(), arm);
+
+			if (Math.abs(arm - armStraightUp) < 0.2)
+			{
+				if (startTimeExtend == -1)
+					startTimeExtend = System.currentTimeMillis();
+
+				if (System.currentTimeMillis() - startTimeExtend < 16000)
+				{
+					leftArmLinear.setPower(1);
+					rightArmLinear.setPower(1);
+				}
+				else
+				{
+					leftArmLinear.setPower(0);
+					rightArmLinear.setPower(0);
+				}
+			}
+
+			leftArm.setPower(-armPower);
+			rightArm.setPower(-armPower);
 
 			Beam.flush();
 		}
