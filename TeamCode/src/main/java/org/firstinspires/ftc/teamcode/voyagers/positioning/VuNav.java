@@ -177,7 +177,7 @@ public class VuNav extends LinearOpMode
 			}
 
 			double armPower = 0;
-			arm = armStraightUp;
+			arm = (armStraightUp + armStraightDown) / 2;
 			armPower = miniPID.getOutput(armPot.getVoltage(), arm);
 
 			if (Math.abs(arm - armStraightUp) < 0.2)

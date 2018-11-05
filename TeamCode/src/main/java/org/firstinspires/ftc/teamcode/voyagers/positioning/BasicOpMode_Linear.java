@@ -38,7 +38,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.teamcode.voyagers.util.Beam;
-import org.firstinspires.ftc.teamcode.voyagers.util.MiniPID;
 
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -123,14 +122,6 @@ public class BasicOpMode_Linear extends LinearOpMode
 		double armStraightUp = 0.9;
 		double armStraightDown = 2.5;
 
-		MiniPID miniPID = new MiniPID(1.4, 0, 0);
-		miniPID.setOutputLimits(1);
-		miniPID.setSetpointRange(1);
-		miniPID.setSetpoint(armStraightDown);
-
-		double arm = armPot.getVoltage();
-		arm = Range.clip(arm, armStraightUp, armStraightDown);
-
 		leftGrip.setPosition(0.25);
 		rightGrip.setPosition(0.65);
 
@@ -156,15 +147,12 @@ public class BasicOpMode_Linear extends LinearOpMode
 			leftFrontDrive.setPower(leftFPower);
 			rightFrontDrive.setPower(rightFPower);
 
-			double armPower = 0;
+			double armPower = 1.0 / 3 * gamepad2.left_stick_y;
 
-			if (gamepad2.dpad_up)
-				arm -= 1.0 / 110;
-			else if (gamepad2.dpad_down)
-				arm += 1.0 / 70;
-
-			arm = Range.clip(arm, armStraightUp, armStraightDown);
-			armPower = miniPID.getOutput(armPot.getVoltage(), arm);
+			if (armPower < 0 && armPot.getVoltage() <= armStraightUp)
+				armPower = 0;
+			if (armPower > 0 && armPot.getVoltage() >= armStraightDown)
+				armPower = 0;
 
 			leftArm.setPower(-armPower);
 			rightArm.setPower(-armPower);
@@ -189,7 +177,6 @@ public class BasicOpMode_Linear extends LinearOpMode
 			Beam.it("rightFrontPower", rightFPower);
 			Beam.it("linearPower", linear);
 			Beam.it("armLinearPower", armLinear);
-			Beam.it("arm", arm);
 			Beam.it("armPot", armPot.getVoltage());
 			Beam.it("armPower", armPower);
 			Beam.it("leftGripPosition", leftGripPosition);
