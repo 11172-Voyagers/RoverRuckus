@@ -119,8 +119,8 @@ public class BasicOpMode_Linear extends LinearOpMode
 		waitForStart();
 		runtime.reset();
 
-		double armStraightUp = 0.9;
-		double armStraightDown = 2.5;
+		double armStraightUp = 0.3;
+		double armStraightDown = 1.255;
 
 		leftGrip.setPosition(0.25);
 		rightGrip.setPosition(0.65);
@@ -147,15 +147,15 @@ public class BasicOpMode_Linear extends LinearOpMode
 			leftFrontDrive.setPower(leftFPower);
 			rightFrontDrive.setPower(rightFPower);
 
-			double armPower = 1.0 / 3 * gamepad2.left_stick_y;
+			double armPower = 0.8 * gamepad2.left_stick_y;
 
 			if (armPower < 0 && armPot.getVoltage() <= armStraightUp)
 				armPower = 0;
 			if (armPower > 0 && armPot.getVoltage() >= armStraightDown)
 				armPower = 0;
 
-			leftArm.setPower(-armPower);
-			rightArm.setPower(-armPower);
+			leftArm.setPower(armPower);
+			rightArm.setPower(armPower);
 
 			double linear = gamepad1.dpad_up ? -1 : (gamepad1.dpad_down ? 1 : 0);
 			leftLinear.setPower(linear);
