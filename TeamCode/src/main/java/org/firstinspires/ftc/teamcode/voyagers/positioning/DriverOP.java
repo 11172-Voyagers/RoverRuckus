@@ -36,6 +36,7 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.teamcode.voyagers.util.Beam;
 import org.firstinspires.ftc.teamcode.voyagers.util.MiniPID;
 
@@ -52,8 +53,8 @@ import org.firstinspires.ftc.teamcode.voyagers.util.MiniPID;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name = "Test PID", group = "Linear Opmode")
-public class BasicOpMode_Linear extends LinearOpMode
+@TeleOp(name = "Driver OP", group = "Linear Opmode")
+public class DriverOP extends LinearOpMode
 {
 	// Declare OpMode members.
 	private ElapsedTime runtime = new ElapsedTime();
@@ -119,39 +120,38 @@ public class BasicOpMode_Linear extends LinearOpMode
 		waitForStart();
 		runtime.reset();
 
-		double armStraightUp = 0.3;
-		double armStraightDown = 1.255;
+		double armStraightUp = 0.32;
+		double armStraightDown = 3.3;
 		double arm = armPot.getVoltage();
 
 		leftGrip.setPosition(0.25);
 		rightGrip.setPosition(0.65);
 
-		MiniPID miniPID = new MiniPID(0, 0, 0);
+		MiniPID miniPID = new MiniPID(4, 0, 16);
 		miniPID.setOutputLimits(1);
-		miniPID.setSetpointRange(1);
-		miniPID.setSetpoint(armStraightDown);
+		miniPID.setSetpoint(arm);
 
 		// run until the end of the match (driver presses STOP)
 		while (opModeIsActive())
 		{
-			//			double scale = (gamepad1.right_trigger > 0.5 ? 2 : gamepad1.left_trigger > 0.5 ? 0.5 : 1);
-			//			double drive = scale * 0.45 * -gamepad1.left_stick_y;
-			//			double turn = scale * 0.35 * gamepad1.right_stick_x;
-			//
-			//			if (gamepad2.y && !wasYPressed)
-			//				isClawMinAngleMode = !isClawMinAngleMode;
-			//
-			//			wasYPressed = gamepad2.y;
-			//
-			//			int fb = (gamepad1.right_trigger > 0.0 ? 1 : -1);
-			//			double leftPower = Range.clip(drive + turn, -1.0, 1.0);
-			//			double rightPower = Range.clip(drive - turn, -1.0, 1.0);
-			//			double leftFPower = Range.clip(drive * -1 * fb + turn, -1.0, 1.0);
-			//			double rightFPower = Range.clip(drive * -1 * fb - turn, -1.0, 1.0);
-			//			leftDrive.setPower(leftPower * fb);
-			//			rightDrive.setPower(rightPower * fb);
-			//			leftFrontDrive.setPower(leftFPower);
-			//			rightFrontDrive.setPower(rightFPower);
+			double scale = (gamepad1.right_trigger > 0.5 ? 2 : gamepad1.left_trigger > 0.5 ? 0.5 : 1);
+			double drive = scale * 0.45 * -gamepad1.left_stick_y;
+			double turn = scale * 0.35 * gamepad1.right_stick_x;
+
+			if (gamepad2.y && !wasYPressed)
+				isClawMinAngleMode = !isClawMinAngleMode;
+
+			wasYPressed = gamepad2.y;
+
+			int fb = (gamepad1.right_trigger > 0.0 ? 1 : -1);
+			double leftPower = Range.clip(drive + turn, -1.0, 1.0);
+			double rightPower = Range.clip(drive - turn, -1.0, 1.0);
+			double leftFPower = Range.clip(drive * -1 * fb + turn, -1.0, 1.0);
+			double rightFPower = Range.clip(drive * -1 * fb - turn, -1.0, 1.0);
+			leftDrive.setPower(leftPower * fb);
+			rightDrive.setPower(rightPower * fb);
+			leftFrontDrive.setPower(leftFPower);
+			rightFrontDrive.setPower(rightFPower);
 
 			//			double armPower = 0.8 * gamepad2.left_stick_y;
 			//
@@ -163,63 +163,38 @@ public class BasicOpMode_Linear extends LinearOpMode
 			//			leftArm.setPower(armPower);
 			//			rightArm.setPower(armPower);
 
-			if (gamepad2.dpad_up)
-			{
-				if (gamepad2.x)
-					miniPID.setP(miniPID.getP() + 0.01);
-				else if (gamepad2.y)
-					miniPID.setI(miniPID.getI() + 0.01);
-				else if (gamepad2.a)
-					miniPID.setD(miniPID.getD() + 0.01);
-				else
-					arm += 0.01;
-			}
-			else if (gamepad2.dpad_down)
-			{
-				if (gamepad2.x)
-					miniPID.setP(miniPID.getP() - 0.01);
-				else if (gamepad2.y)
-					miniPID.setI(miniPID.getI() - 0.01);
-				else if (gamepad2.a)
-					miniPID.setD(miniPID.getD() - 0.01);
-				else
-					arm -= 0.01;
-			}
+			arm += gamepad2.left_stick_y * 0.01;
+			arm = Range.clip(arm, armStraightUp, armStraightDown);
 
-			double armPower = 0;
-			armPower = miniPID.getOutput(armPot.getVoltage(), arm);
+			double armPower = miniPID.getOutput(armPot.getVoltage(), arm);
 			leftArm.setPower(armPower);
 			rightArm.setPower(armPower);
 
-			//			double linear = gamepad1.dpad_up ? -1 : (gamepad1.dpad_down ? 1 : 0);
-			//			leftLinear.setPower(linear);
-			//			rightLinear.setPower(linear);
-			//
-			//			double leftGripPosition = Range.clip(1 - gamepad2.left_trigger, 0.38, isClawMinAngleMode ? 0.75 : 0.68);
-			//			double rightGripPosition = Range.clip(1 - gamepad2.right_trigger, 0, isClawMinAngleMode ? 0.65 : 0.60);
-			//
-			//			leftGrip.setPosition(1 - leftGripPosition);
-			//			rightGrip.setPosition(rightGripPosition);
-			//
-			//			double armLinear = gamepad2.left_bumper ? -1 : (gamepad2.right_bumper ? 1 : 0);
-			//			leftArmLinear.setPower(armLinear);
-			//			rightArmLinear.setPower(armLinear);
-			//
-			//			Beam.it("leftPower", leftPower);
-			//			Beam.it("rightPower", rightPower);
-			//			Beam.it("leftFrontPower", leftFPower);
-			//			Beam.it("rightFrontPower", rightFPower);
-			//			Beam.it("linearPower", linear);
-			//			Beam.it("armLinearPower", armLinear);
-			//			Beam.it("armPot", armPot.getVoltage());
-			//			Beam.it("armPower", armPower);
-			//			Beam.it("leftGripPosition", leftGripPosition);
-			//			Beam.it("rightGripPosition", rightGripPosition);
-			Beam.it("P", miniPID.getP());
-			Beam.it("I", miniPID.getI());
-			Beam.it("D", miniPID.getD());
-			Beam.it("Power", armPower);
-			Beam.it("ArmPos", armPot.getVoltage());
+			double linear = gamepad1.dpad_up ? -1 : (gamepad1.dpad_down ? 1 : 0);
+			leftLinear.setPower(linear);
+			rightLinear.setPower(linear);
+
+			double leftGripPosition = Range.clip(1 - gamepad2.left_trigger, 0.38, isClawMinAngleMode ? 0.75 : 0.68);
+			double rightGripPosition = Range.clip(1 - gamepad2.right_trigger, 0, isClawMinAngleMode ? 0.65 : 0.60);
+
+			leftGrip.setPosition(1 - leftGripPosition);
+			rightGrip.setPosition(rightGripPosition);
+
+			double armLinear = gamepad2.left_bumper ? -1 : (gamepad2.right_bumper ? 1 : 0);
+			leftArmLinear.setPower(armLinear);
+			rightArmLinear.setPower(armLinear);
+
+			Beam.it("leftPower", leftPower);
+			Beam.it("rightPower", rightPower);
+			Beam.it("leftFrontPower", leftFPower);
+			Beam.it("rightFrontPower", rightFPower);
+			Beam.it("linearPower", linear);
+			Beam.it("armLinearPower", armLinear);
+			Beam.it("armPot", armPot.getVoltage());
+			Beam.it("armTgt", arm);
+			Beam.it("armPower", armPower);
+			Beam.it("leftGripPosition", leftGripPosition);
+			Beam.it("rightGripPosition", rightGripPosition);
 			Beam.flush();
 		}
 	}
