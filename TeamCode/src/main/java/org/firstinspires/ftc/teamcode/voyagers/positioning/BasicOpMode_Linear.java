@@ -37,7 +37,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.voyagers.util.Beam;
-import org.firstinspires.ftc.teamcode.voyagers.util.MiniPID;
 
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -67,6 +66,7 @@ public class BasicOpMode_Linear extends LinearOpMode
 	private DcMotor rightArm;
 	private Servo leftGrip;
 	private Servo rightGrip;
+	private Servo clawJoint;
 	private CRServo leftArmLinear;
 	private CRServo rightArmLinear;
 
@@ -98,6 +98,7 @@ public class BasicOpMode_Linear extends LinearOpMode
 		rightGrip = hardwareMap.get(Servo.class, "rightGrip");
 		leftArmLinear = hardwareMap.get(CRServo.class, "leftArmLinear");
 		rightArmLinear = hardwareMap.get(CRServo.class, "rightArmLinear");
+		clawJoint = hardwareMap.get(Servo.class, "clawJoint");
 
 		armPot = hardwareMap.get(AnalogInput.class, "armPot");
 
@@ -109,8 +110,13 @@ public class BasicOpMode_Linear extends LinearOpMode
 		rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
 		leftLinear.setDirection(DcMotor.Direction.FORWARD);
 		rightLinear.setDirection(DcMotor.Direction.REVERSE);
+
 		leftArm.setDirection(DcMotor.Direction.FORWARD);
 		rightArm.setDirection(DcMotor.Direction.REVERSE);
+		leftArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+		rightArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+		leftArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+		rightArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
 		leftArmLinear.setDirection(CRServo.Direction.FORWARD);
 		rightArmLinear.setDirection(CRServo.Direction.REVERSE);
@@ -119,17 +125,14 @@ public class BasicOpMode_Linear extends LinearOpMode
 		waitForStart();
 		runtime.reset();
 
-		double armStraightUp = 0.3;
-		double armStraightDown = 1.255;
-		double arm = armPot.getVoltage();
+		double armStraightUp = 1.7;
+		double armStraightDown = 3.3;
+		double clawDown = 0.0;
+		double clawUp = 0.1921;
+		int arm = 0;
 
 		leftGrip.setPosition(0.25);
 		rightGrip.setPosition(0.65);
-
-		MiniPID miniPID = new MiniPID(0, 0, 0);
-		miniPID.setOutputLimits(1);
-		miniPID.setSetpointRange(1);
-		miniPID.setSetpoint(armStraightDown);
 
 		// run until the end of the match (driver presses STOP)
 		while (opModeIsActive())
@@ -164,32 +167,28 @@ public class BasicOpMode_Linear extends LinearOpMode
 			//			rightArm.setPower(armPower);
 
 			if (gamepad2.dpad_up)
-			{
-				if (gamepad2.x)
-					miniPID.setP(miniPID.getP() + 0.01);
-				else if (gamepad2.y)
-					miniPID.setI(miniPID.getI() + 0.01);
-				else if (gamepad2.a)
-					miniPID.setD(miniPID.getD() + 0.01);
-				else
-					arm += 0.01;
-			}
+				arm += 3;
 			else if (gamepad2.dpad_down)
+				arm -= 3;
+
+			if (gamepad2.x)
 			{
-				if (gamepad2.x)
-					miniPID.setP(miniPID.getP() - 0.01);
-				else if (gamepad2.y)
-					miniPID.setI(miniPID.getI() - 0.01);
-				else if (gamepad2.a)
-					miniPID.setD(miniPID.getD() - 0.01);
-				else
-					arm -= 0.01;
+				leftArm.setPower(1);
+				rightArm.setPower(1);
+			}
+			else
+			{
+				leftArm.setPower(0.3);
+				rightArm.setPower(0.3);
 			}
 
-			double armPower = 0;
-			armPower = miniPID.getOutput(armPot.getVoltage(), arm);
-			leftArm.setPower(armPower);
-			rightArm.setPower(armPower);
+			clawJoint.setPosition(gamepad2.left_trigger);
+
+			double clawPosition = (1 - (armPot.getVoltage() - armStraightUp) / (armStraightDown - armStraightUp)) * clawUp;
+			clawJoint.setPosition(clawPosition);
+
+			leftArm.setTargetPosition(arm);
+			rightArm.setTargetPosition(arm);
 
 			//			double linear = gamepad1.dpad_up ? -1 : (gamepad1.dpad_down ? 1 : 0);
 			//			leftLinear.setPower(linear);
@@ -215,11 +214,11 @@ public class BasicOpMode_Linear extends LinearOpMode
 			//			Beam.it("armPower", armPower);
 			//			Beam.it("leftGripPosition", leftGripPosition);
 			//			Beam.it("rightGripPosition", rightGripPosition);
-			Beam.it("P", miniPID.getP());
-			Beam.it("I", miniPID.getI());
-			Beam.it("D", miniPID.getD());
-			Beam.it("Power", armPower);
-			Beam.it("ArmPos", armPot.getVoltage());
+			Beam.it("ArmPos", leftArm.getCurrentPosition());
+			Beam.it("ArmTgt", leftArm.getTargetPosition());
+			Beam.it("ArmBsy", leftArm.isBusy());
+			Beam.it("ArmPot", armPot.getVoltage());
+			Beam.it("ClawJt", gamepad2.left_trigger);
 			Beam.flush();
 		}
 	}

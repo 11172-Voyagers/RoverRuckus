@@ -127,7 +127,7 @@ public class DriverOP extends LinearOpMode
 		leftGrip.setPosition(0.25);
 		rightGrip.setPosition(0.65);
 
-		MiniPID miniPID = new MiniPID(4, 0, 16);
+		MiniPID miniPID = new MiniPID(0, 0, 0);
 		miniPID.setOutputLimits(1);
 		miniPID.setSetpoint(arm);
 
