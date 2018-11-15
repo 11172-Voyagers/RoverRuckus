@@ -51,7 +51,7 @@ import org.firstinspires.ftc.teamcode.voyagers.util.Beam;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name = "Test PID", group = "Linear Opmode")
+@TeleOp(name = "Debugging", group = "Linear Opmode")
 public class BasicOpMode_Linear extends LinearOpMode
 {
 	// Declare OpMode members.
@@ -72,8 +72,7 @@ public class BasicOpMode_Linear extends LinearOpMode
 
 	private AnalogInput armPot;
 
-	private boolean isClawMinAngleMode = false;
-	private boolean wasYPressed = false;
+	private boolean wasXPressed = false;
 
 	@Override
 	public void runOpMode()
@@ -125,100 +124,10 @@ public class BasicOpMode_Linear extends LinearOpMode
 		waitForStart();
 		runtime.reset();
 
-		double armStraightUp = 1.7;
-		double armStraightDown = 3.3;
-		double clawDown = 0.0;
-		double clawUp = 0.1921;
-		int arm = 0;
-
-		leftGrip.setPosition(0.25);
-		rightGrip.setPosition(0.65);
-
 		// run until the end of the match (driver presses STOP)
 		while (opModeIsActive())
 		{
-			//			double scale = (gamepad1.right_trigger > 0.5 ? 2 : gamepad1.left_trigger > 0.5 ? 0.5 : 1);
-			//			double drive = scale * 0.45 * -gamepad1.left_stick_y;
-			//			double turn = scale * 0.35 * gamepad1.right_stick_x;
-			//
-			//			if (gamepad2.y && !wasYPressed)
-			//				isClawMinAngleMode = !isClawMinAngleMode;
-			//
-			//			wasYPressed = gamepad2.y;
-			//
-			//			int fb = (gamepad1.right_trigger > 0.0 ? 1 : -1);
-			//			double leftPower = Range.clip(drive + turn, -1.0, 1.0);
-			//			double rightPower = Range.clip(drive - turn, -1.0, 1.0);
-			//			double leftFPower = Range.clip(drive * -1 * fb + turn, -1.0, 1.0);
-			//			double rightFPower = Range.clip(drive * -1 * fb - turn, -1.0, 1.0);
-			//			leftDrive.setPower(leftPower * fb);
-			//			rightDrive.setPower(rightPower * fb);
-			//			leftFrontDrive.setPower(leftFPower);
-			//			rightFrontDrive.setPower(rightFPower);
-
-			//			double armPower = 0.8 * gamepad2.left_stick_y;
-			//
-			//			if (armPower < 0 && armPot.getVoltage() <= armStraightUp)
-			//				armPower = 0;
-			//			if (armPower > 0 && armPot.getVoltage() >= armStraightDown)
-			//				armPower = 0;
-			//
-			//			leftArm.setPower(armPower);
-			//			rightArm.setPower(armPower);
-
-			if (gamepad2.dpad_up)
-				arm += 3;
-			else if (gamepad2.dpad_down)
-				arm -= 3;
-
-			if (gamepad2.x)
-			{
-				leftArm.setPower(1);
-				rightArm.setPower(1);
-			}
-			else
-			{
-				leftArm.setPower(0.3);
-				rightArm.setPower(0.3);
-			}
-
-			clawJoint.setPosition(gamepad2.left_trigger);
-
-			double clawPosition = (1 - (armPot.getVoltage() - armStraightUp) / (armStraightDown - armStraightUp)) * clawUp;
-			clawJoint.setPosition(clawPosition);
-
-			leftArm.setTargetPosition(arm);
-			rightArm.setTargetPosition(arm);
-
-			//			double linear = gamepad1.dpad_up ? -1 : (gamepad1.dpad_down ? 1 : 0);
-			//			leftLinear.setPower(linear);
-			//			rightLinear.setPower(linear);
-			//
-			//			double leftGripPosition = Range.clip(1 - gamepad2.left_trigger, 0.38, isClawMinAngleMode ? 0.75 : 0.68);
-			//			double rightGripPosition = Range.clip(1 - gamepad2.right_trigger, 0, isClawMinAngleMode ? 0.65 : 0.60);
-			//
-			//			leftGrip.setPosition(1 - leftGripPosition);
-			//			rightGrip.setPosition(rightGripPosition);
-			//
-			//			double armLinear = gamepad2.left_bumper ? -1 : (gamepad2.right_bumper ? 1 : 0);
-			//			leftArmLinear.setPower(armLinear);
-			//			rightArmLinear.setPower(armLinear);
-			//
-			//			Beam.it("leftPower", leftPower);
-			//			Beam.it("rightPower", rightPower);
-			//			Beam.it("leftFrontPower", leftFPower);
-			//			Beam.it("rightFrontPower", rightFPower);
-			//			Beam.it("linearPower", linear);
-			//			Beam.it("armLinearPower", armLinear);
-			//			Beam.it("armPot", armPot.getVoltage());
-			//			Beam.it("armPower", armPower);
-			//			Beam.it("leftGripPosition", leftGripPosition);
-			//			Beam.it("rightGripPosition", rightGripPosition);
-			Beam.it("ArmPos", leftArm.getCurrentPosition());
-			Beam.it("ArmTgt", leftArm.getTargetPosition());
-			Beam.it("ArmBsy", leftArm.isBusy());
-			Beam.it("ArmPot", armPot.getVoltage());
-			Beam.it("ClawJt", gamepad2.left_trigger);
+			Beam.it("Runtime", runtime.toString());
 			Beam.flush();
 		}
 	}

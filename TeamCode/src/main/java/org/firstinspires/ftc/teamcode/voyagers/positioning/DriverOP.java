@@ -38,7 +38,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.teamcode.voyagers.util.Beam;
-import org.firstinspires.ftc.teamcode.voyagers.util.MiniPID;
 
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -75,6 +74,7 @@ public class DriverOP extends LinearOpMode
 
 	private boolean isClawMinAngleMode = false;
 	private boolean wasYPressed = false;
+	private boolean wasXPressed = false;
 
 	@Override
 	public void runOpMode()
@@ -112,6 +112,10 @@ public class DriverOP extends LinearOpMode
 		rightLinear.setDirection(DcMotor.Direction.REVERSE);
 		leftArm.setDirection(DcMotor.Direction.FORWARD);
 		rightArm.setDirection(DcMotor.Direction.REVERSE);
+		leftArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+		rightArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+		leftArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+		rightArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
 		leftArmLinear.setDirection(CRServo.Direction.FORWARD);
 		rightArmLinear.setDirection(CRServo.Direction.REVERSE);
@@ -120,16 +124,10 @@ public class DriverOP extends LinearOpMode
 		waitForStart();
 		runtime.reset();
 
-		double armStraightUp = 0.32;
-		double armStraightDown = 3.3;
-		double arm = armPot.getVoltage();
+		int arm = 0;
 
 		leftGrip.setPosition(0.25);
 		rightGrip.setPosition(0.65);
-
-		MiniPID miniPID = new MiniPID(0, 0, 0);
-		miniPID.setOutputLimits(1);
-		miniPID.setSetpoint(arm);
 
 		// run until the end of the match (driver presses STOP)
 		while (opModeIsActive())
@@ -153,22 +151,18 @@ public class DriverOP extends LinearOpMode
 			leftFrontDrive.setPower(leftFPower);
 			rightFrontDrive.setPower(rightFPower);
 
-			//			double armPower = 0.8 * gamepad2.left_stick_y;
-			//
-			//			if (armPower < 0 && armPot.getVoltage() <= armStraightUp)
-			//				armPower = 0;
-			//			if (armPower > 0 && armPot.getVoltage() >= armStraightDown)
-			//				armPower = 0;
-			//
-			//			leftArm.setPower(armPower);
-			//			rightArm.setPower(armPower);
+			leftArm.setPower(1);
+			rightArm.setPower(1);
 
-			arm += gamepad2.left_stick_y * 0.01;
-			arm = Range.clip(arm, armStraightUp, armStraightDown);
+			if (gamepad2.x)
+				arm += 2 * gamepad2.left_stick_y;
+			else if (wasXPressed)
+				arm = rightArm.getCurrentPosition();
 
-			double armPower = miniPID.getOutput(armPot.getVoltage(), arm);
-			leftArm.setPower(armPower);
-			rightArm.setPower(armPower);
+			wasXPressed = gamepad2.x;
+
+			leftArm.setTargetPosition(arm);
+			rightArm.setTargetPosition(arm);
 
 			double linear = gamepad1.dpad_up ? -1 : (gamepad1.dpad_down ? 1 : 0);
 			leftLinear.setPower(linear);
@@ -190,9 +184,10 @@ public class DriverOP extends LinearOpMode
 			Beam.it("rightFrontPower", rightFPower);
 			Beam.it("linearPower", linear);
 			Beam.it("armLinearPower", armLinear);
+			Beam.it("armPos", rightArm.getCurrentPosition());
+			Beam.it("armTgt", rightArm.getTargetPosition());
+			Beam.it("armBsy", rightArm.isBusy());
 			Beam.it("armPot", armPot.getVoltage());
-			Beam.it("armTgt", arm);
-			Beam.it("armPower", armPower);
 			Beam.it("leftGripPosition", leftGripPosition);
 			Beam.it("rightGripPosition", rightGripPosition);
 			Beam.flush();
