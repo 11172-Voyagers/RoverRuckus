@@ -104,8 +104,8 @@ public class DriverOP extends LinearOpMode
 
 		// Most robots need the motor on one side to be reversed to drive forward
 		// Reverse the motor that runs backwards when connected directly to the battery
-		leftDrive.setDirection(DcMotor.Direction.FORWARD);
-		rightDrive.setDirection(DcMotor.Direction.REVERSE);
+		leftDrive.setDirection(DcMotor.Direction.REVERSE);
+		rightDrive.setDirection(DcMotor.Direction.FORWARD);
 		leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
 		rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
 		leftLinear.setDirection(DcMotor.Direction.FORWARD);
@@ -114,11 +114,9 @@ public class DriverOP extends LinearOpMode
 		rightArm.setDirection(DcMotor.Direction.REVERSE);
 		leftArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 		rightArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-		leftArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-		rightArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-		leftArmLinear.setDirection(CRServo.Direction.FORWARD);
-		rightArmLinear.setDirection(CRServo.Direction.REVERSE);
+		leftArmLinear.setDirection(CRServo.Direction.REVERSE);
+		rightArmLinear.setDirection(CRServo.Direction.FORWARD);
 
 		// Wait for the game to start (driver presses PLAY)
 		waitForStart();
@@ -151,18 +149,10 @@ public class DriverOP extends LinearOpMode
 			leftFrontDrive.setPower(leftFPower);
 			rightFrontDrive.setPower(rightFPower);
 
-			leftArm.setPower(1);
-			rightArm.setPower(1);
-
-			if (gamepad2.x)
-				arm += 2 * gamepad2.left_stick_y;
-			else if (wasXPressed)
-				arm = rightArm.getCurrentPosition();
+			leftArm.setPower(gamepad2.left_stick_y);
+			rightArm.setPower(gamepad2.left_stick_y);
 
 			wasXPressed = gamepad2.x;
-
-			leftArm.setTargetPosition(arm);
-			rightArm.setTargetPosition(arm);
 
 			double linear = gamepad1.dpad_up ? -1 : (gamepad1.dpad_down ? 1 : 0);
 			leftLinear.setPower(linear);
@@ -183,11 +173,7 @@ public class DriverOP extends LinearOpMode
 			Beam.it("leftFrontPower", leftFPower);
 			Beam.it("rightFrontPower", rightFPower);
 			Beam.it("linearPower", linear);
-			Beam.it("armLinearPower", armLinear);
-			Beam.it("armPos", rightArm.getCurrentPosition());
-			Beam.it("armTgt", rightArm.getTargetPosition());
-			Beam.it("armBsy", rightArm.isBusy());
-			Beam.it("armPot", armPot.getVoltage());
+			Beam.it("armPot", gamepad2.left_stick_y);
 			Beam.it("leftGripPosition", leftGripPosition);
 			Beam.it("rightGripPosition", rightGripPosition);
 			Beam.flush();
