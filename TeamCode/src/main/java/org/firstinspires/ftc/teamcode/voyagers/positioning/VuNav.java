@@ -31,12 +31,11 @@ package org.firstinspires.ftc.teamcode.voyagers.positioning;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
-import org.firstinspires.ftc.teamcode.voyagers.Voyagers;
 import org.firstinspires.ftc.teamcode.voyagers.util.Beam;
-import org.firstinspires.ftc.teamcode.voyagers.util.FieldMarkers;
 
 /**
  * This 2016-2017 OpMode illustrates the basics of using the Vuforia localizer to determine
@@ -60,39 +59,133 @@ import org.firstinspires.ftc.teamcode.voyagers.util.FieldMarkers;
  *
  * @see VuforiaLocalizer
  * @see VuforiaTrackableDefaultListener
- * see  ftc_app/doc/tutorial/FTC_FieldCoordinateSystemDefinition.pdf
- * <p>
- * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list.
- * <p>
- * IMPORTANT: In order to use this OpMode, you need to obtain your own Vuforia license key as
- * is explained below.
+ * 		see  ftc_app/doc/tutorial/FTC_FieldCoordinateSystemDefinition.pdf
+ * 		<p>
+ * 		Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
+ * 		Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list.
+ * 		<p>
+ * 		IMPORTANT: In order to use this OpMode, you need to obtain your own Vuforia license key as
+ * 		is explained below.
  */
 
-@Autonomous(name = "Concept: Vuforia Navigation", group = "Concept")
+@Autonomous(name = "Auto", group = "Concept")
 public class VuNav extends LinearOpMode
 {
 	public static final String TAG = "Vuforia Navigation Sample";
+	private DcMotor leftDrive;
+	private DcMotor rightDrive;
+	private DcMotor leftFrontDrive;
+	private DcMotor rightFrontDrive;
+	private DcMotor leftLinear;
+	private DcMotor rightLinear;
+	private VuforiaLocalizer vuforia;
+
+	private void initVuforia()
+	{
+		/*
+		 * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
+		 */
+		VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
+		parameters.vuforiaLicenseKey = "AbYs9VP/////AAABmQ/oqRZ3Y0HUgMxWT7WY7TYgCX++dmMODHSX6UBVOIyJ4IDy0zQlwWXB3dulOwewS1ojObAk7FBzdE3sgh1PU7Ovw8NaWKhA1LfrJS1zfgAvOAFdzMhfhoeRFZfChBkKXxVG0Nk8Rla+iYvCldDIhbJA98oUNB8fE/KEx9rDVvLHnxXI8L7PQYUKShZdH5qHb/A99YohcgXhUiEBwBSzWYcKAKZinXxVR1zCDcsC3vO+g+is6MZ3y9bWcXCpBsm95uc9m5Ad4jzCggpcKRW75SJIffXaM6YLMaIiipjjJgkYalKbnj39iNpjR0vJhrAHzRid/uP5jvnbTIF/BzE+e0049eoSh6F6nFBkEQEIG3ZD";
+
+		parameters.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
+
+		//  Instantiate the Vuforia engine
+		vuforia = ClassFactory.getInstance().createVuforia(parameters);
+
+		// Loading trackables is not necessary for the Tensor Flow Object Detection engine.
+	}
+
+	private void initTfod()
+	{
+		int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+		TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
+		tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
+		tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
+	}
 
 	@Override
 	public void runOpMode()
 	{
-		Voyagers.initOpMode(TAG, this);
+		//Voyagers.initOpMode(TAG, this);
 
-		Beam.it(">", "Press Play to start tracking");
+		telemetry.addData("Status", "Initialized");
+		telemetry.update();
+
+		Beam.init(this.telemetry);
+
+		initVuforia();
+
+		if (ClassFactory.getInstance().canCreateTFObjectDetector())
+		{
+			initTfod();
+		}
+		else
+		{
+			telemetry.addData("Sorry!", "This device is not compatible with TFOD");
+		}
+
+		TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters();
+		tfodParameters.useObjectTracker = false;
+		tfodParameters.minimumConfidence = 0.75;
+
+		// Initialize the hardware variables. Note that the strings used here as parameters
+		// to 'get' must correspond to the names assigned during the robot configuration
+		// step (using the FTC Robot Controller app on the phone).
+		leftDrive = hardwareMap.get(DcMotor.class, "left_back_drive");
+		rightDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
+		leftFrontDrive = hardwareMap.get(DcMotor.class, "left_forward_drive");
+		rightFrontDrive = hardwareMap.get(DcMotor.class, "right_forward_drive");
+		leftLinear = hardwareMap.get(DcMotor.class, "leftLinear");
+		rightLinear = hardwareMap.get(DcMotor.class, "rightLinear");
+
+		leftDrive.setDirection(DcMotor.Direction.FORWARD);
+		rightDrive.setDirection(DcMotor.Direction.FORWARD);
+		leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+		rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
+
+		leftLinear.setDirection(DcMotor.Direction.FORWARD);
+		rightLinear.setDirection(DcMotor.Direction.REVERSE);
 
 		waitForStart();
 
-		FieldMarkers.startTracking();
+		//FieldMarkers.startTracking();
+
+		long startTime = System.currentTimeMillis();
+		long startTimeExtend = -1;
 
 		while (opModeIsActive())
 		{
-			OpenGLMatrix lastLocation = FieldMarkers.getLocation(telemetry);
-
-			if (lastLocation != null)
-				Beam.it("Pos", FieldMarkers.formatMatrix(lastLocation));
+			if (System.currentTimeMillis() - startTime < 1650)
+			{
+				leftLinear.setPower(1);
+				rightLinear.setPower(1);
+			}
 			else
-				Beam.it("Pos", "Unknown");
+			{
+				leftLinear.setPower(0);
+				rightLinear.setPower(0);
+			}
+
+			if (System.currentTimeMillis() - startTime > 5000 && System.currentTimeMillis() - startTime < 6800)
+			{
+				leftFrontDrive.setPower(0.7);
+				rightFrontDrive.setPower(0.7);
+				leftDrive.setPower(-1);
+				rightDrive.setPower(-0.7);
+			}
+			else
+			{
+				leftFrontDrive.setPower(0);
+				rightFrontDrive.setPower(0);
+				leftDrive.setPower(0);
+				rightDrive.setPower(0);
+			}
+
+			if (startTimeExtend == -1)
+				startTimeExtend = System.currentTimeMillis();
+
+			Beam.flush();
 		}
 	}
 }
