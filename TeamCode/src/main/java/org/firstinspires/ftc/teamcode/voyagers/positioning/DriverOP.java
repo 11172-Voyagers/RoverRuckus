@@ -140,8 +140,8 @@ public class DriverOP extends LinearOpMode
 			leftFrontDrive.setPower(leftFPower);
 			rightFrontDrive.setPower(rightFPower);
 
-			leftArm.setPower(gamepad2.left_stick_y / (gamepad2.y ? 2f : 5f));
-			rightArm.setPower(gamepad2.left_stick_y / (gamepad2.y ? 2f : 5f));
+			leftArm.setPower(gamepad2.left_stick_y / (gamepad2.y ? 1f : 2f));
+			rightArm.setPower(gamepad2.left_stick_y / (gamepad2.y ? 1f : 2f));
 
 			double linear = gamepad1.dpad_up ? -1 : (gamepad1.dpad_down ? 1 : 0);
 			leftLinear.setPower(linear);

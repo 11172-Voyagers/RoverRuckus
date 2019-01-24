@@ -165,52 +165,19 @@ public class VuNav extends LinearOpMode
 		long startTime = System.currentTimeMillis();
 		long startTimeExtend = -1;
 
+		int countLeft = 0;
+		int countCenter = 0;
+		int countRight = 0;
+		boolean recognize = false;
+
 		while (opModeIsActive())
 		{
 			// getUpdatedRecognitions() will return null if no new information is available since
 			// the last time that call was made.
 			List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
-			if (updatedRecognitions != null)
+			if (updatedRecognitions != null && recognize)
 			{
 				telemetry.addData("Minerals: ", updatedRecognitions.size());
-
-				//				if (updatedRecognitions.size() == 3)
-				//				{
-				//					int goldMineralX = -1;
-				//					int silverMineral1X = -1;
-				//					int silverMineral2X = -1;
-				//					for (Recognition recognition : updatedRecognitions)
-				//					{
-				//						if (recognition.getLabel().equals(LABEL_GOLD_MINERAL))
-				//						{
-				//							goldMineralX = (int)recognition.getLeft();
-				//						}
-				//						else if (silverMineral1X == -1)
-				//						{
-				//							silverMineral1X = (int)recognition.getLeft();
-				//						}
-				//						else
-				//						{
-				//							silverMineral2X = (int)recognition.getLeft();
-				//						}
-				//					}
-				//
-				//					if (goldMineralX != -1 && silverMineral1X != -1 && silverMineral2X != -1)
-				//					{
-				//						if (goldMineralX < silverMineral1X && goldMineralX < silverMineral2X)
-				//						{
-				//							telemetry.addData("Gold Mineral Position", "Left");
-				//						}
-				//						else if (goldMineralX > silverMineral1X && goldMineralX > silverMineral2X)
-				//						{
-				//							telemetry.addData("Gold Mineral Position", "Right");
-				//						}
-				//						else
-				//						{
-				//							telemetry.addData("Gold Mineral Position", "Center");
-				//						}
-				//					}
-				//				}
 
 				if (updatedRecognitions.size() == 2)
 				{
@@ -233,44 +200,60 @@ public class VuNav extends LinearOpMode
 						if (goldMineralX < silverMineral1X)
 						{
 							telemetry.addData("Gold Mineral Position", "Left");
+							countLeft++;
 						}
 						else
 						{
 							telemetry.addData("Gold Mineral Position", "Center");
+							countCenter++;
 						}
 					}
 					else if (goldMineralX == -1)
 					{
 						telemetry.addData("Gold Mineral Position", "Right");
+						countRight++;
 					}
 				}
 			}
 
-			//					if (System.currentTimeMillis() - startTime < 1650)
-			//					{
-			//						leftLinear.setPower(1);
-			//						rightLinear.setPower(1);
-			//					}
-			//					else
-			//					{
-			//						leftLinear.setPower(0);
-			//						rightLinear.setPower(0);
-			//					}
-			//
-			//					if (System.currentTimeMillis() - startTime > 5000 && System.currentTimeMillis() - startTime < 6800)
-			//					{
-			//						leftFrontDrive.setPower(0.7);
-			//						rightFrontDrive.setPower(0.7);
-			//						leftDrive.setPower(-1);
-			//						rightDrive.setPower(-0.7);
-			//					}
-			//					else
-			//					{
-			//						leftFrontDrive.setPower(0);
-			//						rightFrontDrive.setPower(0);
-			//						leftDrive.setPower(0);
-			//						rightDrive.setPower(0);
-			//					}
+			if (System.currentTimeMillis() - startTime < 1650)
+			{
+				leftLinear.setPower(1);
+				rightLinear.setPower(1);
+			}
+			else
+			{
+				recognize = true;
+				leftLinear.setPower(0);
+				rightLinear.setPower(0);
+			}
+
+			if (System.currentTimeMillis() - startTime > 5000 && System.currentTimeMillis() - startTime < 6800)
+			{
+				recognize = false;
+				int direction = Math.max(Math.max(countLeft, countCenter), countRight);
+				double scaleLeft = 1;
+				double scaleRight = 1;
+				if (direction == countLeft)
+				{
+					scaleLeft = 0.6;
+				}
+				else if (direction == countRight)
+				{
+					scaleRight = 0.6;
+				}
+				leftFrontDrive.setPower(0.7 * scaleLeft);
+				rightFrontDrive.setPower(0.7 * scaleRight);
+				leftDrive.setPower(-1 * scaleLeft);
+				rightDrive.setPower(-0.7 * scaleRight);
+			}
+			else
+			{
+				leftFrontDrive.setPower(0);
+				rightFrontDrive.setPower(0);
+				leftDrive.setPower(0);
+				rightDrive.setPower(0);
+			}
 
 			if (startTimeExtend == -1)
 				startTimeExtend = System.currentTimeMillis();
