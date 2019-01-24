@@ -35,7 +35,13 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
+import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
+import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 import org.firstinspires.ftc.teamcode.voyagers.util.Beam;
+
+import java.util.List;
+
+import static org.firstinspires.ftc.robotcore.external.tfod.TfodRoverRuckus.*;
 
 /**
  * This 2016-2017 OpMode illustrates the basics of using the Vuforia localizer to determine
@@ -79,6 +85,7 @@ public class VuNav extends LinearOpMode
 	private DcMotor leftLinear;
 	private DcMotor rightLinear;
 	private VuforiaLocalizer vuforia;
+	private TFObjectDetector tfod;
 
 	private void initVuforia()
 	{
@@ -99,7 +106,10 @@ public class VuNav extends LinearOpMode
 	private void initTfod()
 	{
 		int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-		TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
+
+		TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters();
+		tfodParameters.useObjectTracker = false;
+		tfodParameters.minimumConfidence = 0.75;
 		tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
 		tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
 	}
@@ -125,9 +135,10 @@ public class VuNav extends LinearOpMode
 			telemetry.addData("Sorry!", "This device is not compatible with TFOD");
 		}
 
-		TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters();
-		tfodParameters.useObjectTracker = false;
-		tfodParameters.minimumConfidence = 0.75;
+		if (tfod != null)
+		{
+			tfod.activate();
+		}
 
 		// Initialize the hardware variables. Note that the strings used here as parameters
 		// to 'get' must correspond to the names assigned during the robot configuration
@@ -156,31 +167,110 @@ public class VuNav extends LinearOpMode
 
 		while (opModeIsActive())
 		{
-			if (System.currentTimeMillis() - startTime < 1650)
+			// getUpdatedRecognitions() will return null if no new information is available since
+			// the last time that call was made.
+			List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+			if (updatedRecognitions != null)
 			{
-				leftLinear.setPower(1);
-				rightLinear.setPower(1);
-			}
-			else
-			{
-				leftLinear.setPower(0);
-				rightLinear.setPower(0);
+				telemetry.addData("Minerals: ", updatedRecognitions.size());
+
+				//				if (updatedRecognitions.size() == 3)
+				//				{
+				//					int goldMineralX = -1;
+				//					int silverMineral1X = -1;
+				//					int silverMineral2X = -1;
+				//					for (Recognition recognition : updatedRecognitions)
+				//					{
+				//						if (recognition.getLabel().equals(LABEL_GOLD_MINERAL))
+				//						{
+				//							goldMineralX = (int)recognition.getLeft();
+				//						}
+				//						else if (silverMineral1X == -1)
+				//						{
+				//							silverMineral1X = (int)recognition.getLeft();
+				//						}
+				//						else
+				//						{
+				//							silverMineral2X = (int)recognition.getLeft();
+				//						}
+				//					}
+				//
+				//					if (goldMineralX != -1 && silverMineral1X != -1 && silverMineral2X != -1)
+				//					{
+				//						if (goldMineralX < silverMineral1X && goldMineralX < silverMineral2X)
+				//						{
+				//							telemetry.addData("Gold Mineral Position", "Left");
+				//						}
+				//						else if (goldMineralX > silverMineral1X && goldMineralX > silverMineral2X)
+				//						{
+				//							telemetry.addData("Gold Mineral Position", "Right");
+				//						}
+				//						else
+				//						{
+				//							telemetry.addData("Gold Mineral Position", "Center");
+				//						}
+				//					}
+				//				}
+
+				if (updatedRecognitions.size() == 2)
+				{
+					int goldMineralX = -1;
+					int silverMineral1X = -1;
+					for (Recognition recognition : updatedRecognitions)
+					{
+						if (recognition.getLabel().equals(LABEL_GOLD_MINERAL))
+						{
+							goldMineralX = (int)recognition.getLeft();
+						}
+						else
+						{
+							silverMineral1X = (int)recognition.getLeft();
+						}
+					}
+
+					if (goldMineralX != -1 && silverMineral1X != -1)
+					{
+						if (goldMineralX < silverMineral1X)
+						{
+							telemetry.addData("Gold Mineral Position", "Left");
+						}
+						else
+						{
+							telemetry.addData("Gold Mineral Position", "Center");
+						}
+					}
+					else if (goldMineralX == -1)
+					{
+						telemetry.addData("Gold Mineral Position", "Right");
+					}
+				}
 			}
 
-			if (System.currentTimeMillis() - startTime > 5000 && System.currentTimeMillis() - startTime < 6800)
-			{
-				leftFrontDrive.setPower(0.7);
-				rightFrontDrive.setPower(0.7);
-				leftDrive.setPower(-1);
-				rightDrive.setPower(-0.7);
-			}
-			else
-			{
-				leftFrontDrive.setPower(0);
-				rightFrontDrive.setPower(0);
-				leftDrive.setPower(0);
-				rightDrive.setPower(0);
-			}
+			//					if (System.currentTimeMillis() - startTime < 1650)
+			//					{
+			//						leftLinear.setPower(1);
+			//						rightLinear.setPower(1);
+			//					}
+			//					else
+			//					{
+			//						leftLinear.setPower(0);
+			//						rightLinear.setPower(0);
+			//					}
+			//
+			//					if (System.currentTimeMillis() - startTime > 5000 && System.currentTimeMillis() - startTime < 6800)
+			//					{
+			//						leftFrontDrive.setPower(0.7);
+			//						rightFrontDrive.setPower(0.7);
+			//						leftDrive.setPower(-1);
+			//						rightDrive.setPower(-0.7);
+			//					}
+			//					else
+			//					{
+			//						leftFrontDrive.setPower(0);
+			//						rightFrontDrive.setPower(0);
+			//						leftDrive.setPower(0);
+			//						rightDrive.setPower(0);
+			//					}
 
 			if (startTimeExtend == -1)
 				startTimeExtend = System.currentTimeMillis();
