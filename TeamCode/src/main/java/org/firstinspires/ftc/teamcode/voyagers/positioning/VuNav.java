@@ -216,35 +216,50 @@ public class VuNav extends LinearOpMode
 				}
 			}
 
-			if (System.currentTimeMillis() - startTime < 1650)
+			if (System.currentTimeMillis() - startTime < 1925)
 			{
+				telemetry.addData("Recognition:", "Off");
 				leftLinear.setPower(1);
 				rightLinear.setPower(1);
+			}
+			else if (System.currentTimeMillis() - startTime < 2100)
+			{
+				rightFrontDrive.setPower(0.7);
+				rightDrive.setPower(-0.7);
 			}
 			else
 			{
 				recognize = true;
+				telemetry.addData("Recognition:", "Recognizing");
 				leftLinear.setPower(0);
 				rightLinear.setPower(0);
+				rightFrontDrive.setPower(0);
+				rightDrive.setPower(0);
 			}
 
-			if (System.currentTimeMillis() - startTime > 5000 && System.currentTimeMillis() - startTime < 6800)
+			if (System.currentTimeMillis() - startTime > 5000 && System.currentTimeMillis() - startTime < 7500)
 			{
 				recognize = false;
+				telemetry.addData("Recognition:", "Off");
 				int direction = Math.max(Math.max(countLeft, countCenter), countRight);
 				double scaleLeft = 1;
 				double scaleRight = 1;
-				if (direction == countLeft)
-				{
-					scaleLeft = 0.6;
-				}
-				else if (direction == countRight)
-				{
-					scaleRight = 0.6;
-				}
+				//				if (direction == countLeft)
+				//				{
+				//					scaleLeft = 0.3;
+				//					telemetry.addData("Gold Mineral Position", "Left");
+				//				}
+				//				else if (direction == countRight)
+				//				{
+				//					scaleRight = 0.3;
+				//					telemetry.addData("Gold Mineral Position", "Right");
+				//				}
+				//				else
+				//					telemetry.addData("Gold Mineral Position", "Center");
+
 				leftFrontDrive.setPower(0.7 * scaleLeft);
-				rightFrontDrive.setPower(0.7 * scaleRight);
 				leftDrive.setPower(-1 * scaleLeft);
+				rightFrontDrive.setPower(0.7 * scaleRight);
 				rightDrive.setPower(-0.7 * scaleRight);
 			}
 			else
@@ -254,6 +269,10 @@ public class VuNav extends LinearOpMode
 				leftDrive.setPower(0);
 				rightDrive.setPower(0);
 			}
+
+			telemetry.addData("Left", countLeft);
+			telemetry.addData("Center", countCenter);
+			telemetry.addData("Right", countRight);
 
 			if (startTimeExtend == -1)
 				startTimeExtend = System.currentTimeMillis();
