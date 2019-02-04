@@ -126,17 +126,16 @@ public class DriverOP extends LinearOpMode
 		// run until the end of the match (driver presses STOP)
 		while (opModeIsActive())
 		{
-			double scale = (gamepad1.right_trigger > 0.5 ? 2 : gamepad1.left_trigger > 0.5 ? 0.5 : 1);
+			double scale = -1.75f;
 			double drive = scale * 0.45 * -gamepad1.left_stick_y;
 			double turn = scale * 0.35 * gamepad1.right_stick_x;
 
-			int fb = (gamepad1.right_trigger > 0.0 ? 1 : -1);
 			double leftPower = Range.clip(drive + turn, -1.0, 1.0);
 			double rightPower = Range.clip(drive - turn, -1.0, 1.0);
-			double leftFPower = Range.clip(drive * -1 * fb + turn, -1.0, 1.0);
-			double rightFPower = Range.clip(drive * -1 * fb - turn, -1.0, 1.0);
-			leftDrive.setPower(leftPower * fb);
-			rightDrive.setPower(rightPower * fb);
+			double leftFPower = Range.clip(-drive + turn, -1.0, 1.0);
+			double rightFPower = Range.clip(-drive - turn, -1.0, 1.0);
+			leftDrive.setPower(leftPower);
+			rightDrive.setPower(rightPower);
 			leftFrontDrive.setPower(leftFPower);
 			rightFrontDrive.setPower(rightFPower);
 
