@@ -132,8 +132,8 @@ public class DriverOP extends LinearOpMode
 
 			double leftPower = Range.clip(drive + turn, -1.0, 1.0);
 			double rightPower = Range.clip(drive - turn, -1.0, 1.0);
-			double leftFPower = Range.clip(-drive + turn, -1.0, 1.0);
-			double rightFPower = Range.clip(-drive - turn, -1.0, 1.0);
+			double leftFPower = Range.clip(-drive - turn, -1.0, 1.0);
+			double rightFPower = Range.clip(-drive + turn, -1.0, 1.0);
 			leftDrive.setPower(leftPower);
 			rightDrive.setPower(rightPower);
 			leftFrontDrive.setPower(leftFPower);

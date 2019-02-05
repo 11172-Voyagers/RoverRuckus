@@ -244,18 +244,18 @@ public class VuNav extends LinearOpMode
 				int direction = Math.max(Math.max(countLeft, countCenter), countRight);
 				double scaleLeft = 1;
 				double scaleRight = 1;
-				//				if (direction == countLeft)
-				//				{
-				//					scaleLeft = 0.3;
-				//					telemetry.addData("Gold Mineral Position", "Left");
-				//				}
-				//				else if (direction == countRight)
-				//				{
-				//					scaleRight = 0.3;
-				//					telemetry.addData("Gold Mineral Position", "Right");
-				//				}
-				//				else
-				//					telemetry.addData("Gold Mineral Position", "Center");
+				if (direction == countLeft)
+				{
+					scaleLeft = 0.3;
+					telemetry.addData("Gold Mineral Position", "Left");
+				}
+				else if (direction == countRight)
+				{
+					scaleRight = 0.3;
+					telemetry.addData("Gold Mineral Position", "Right");
+				}
+				else
+					telemetry.addData("Gold Mineral Position", "Center");
 
 				leftFrontDrive.setPower(0.7 * scaleLeft);
 				leftDrive.setPower(-1 * scaleLeft);
