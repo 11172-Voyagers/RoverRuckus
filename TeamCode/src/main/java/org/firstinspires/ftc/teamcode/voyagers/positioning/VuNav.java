@@ -109,7 +109,7 @@ public class VuNav extends LinearOpMode
 
 		TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters();
 		tfodParameters.useObjectTracker = false;
-		tfodParameters.minimumConfidence = 0.75;
+		tfodParameters.minimumConfidence = 0.55;
 		tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
 		tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
 	}
