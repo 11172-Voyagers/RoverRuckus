@@ -67,6 +67,9 @@ public class DriverOP extends LinearOpMode
 	private CRServo leftGrip;
 	private CRServo rightGrip;
 
+	private CRServo leftAntiSlip;
+	private CRServo rightAntiSlip;
+
 	private CRServo combine;
 	private CRServo leftArmLinear;
 	private CRServo rightArmLinear;
@@ -95,13 +98,16 @@ public class DriverOP extends LinearOpMode
 		rightGrip = hardwareMap.get(CRServo.class, "rightGrip");
 		combine = hardwareMap.get(CRServo.class, "combine");
 
+		leftAntiSlip = hardwareMap.get(CRServo.class, "leftAntiSlip");
+		rightAntiSlip = hardwareMap.get(CRServo.class, "rightAntiSlip");
+
 		leftArmLinear = hardwareMap.get(CRServo.class, "leftArmLinear");
 		rightArmLinear = hardwareMap.get(CRServo.class, "rightArmLinear");
 
 		// Most robots need the motor on one side to be reversed to drive forward
 		// Reverse the motor that runs backwards when connected directly to the battery
 		leftDrive.setDirection(DcMotor.Direction.FORWARD);
-		rightDrive.setDirection(DcMotor.Direction.FORWARD);
+		rightDrive.setDirection(DcMotor.Direction.REVERSE);
 		leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
 		rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
 
@@ -114,6 +120,8 @@ public class DriverOP extends LinearOpMode
 
 		leftArmLinear.setDirection(CRServo.Direction.REVERSE);
 		rightArmLinear.setDirection(CRServo.Direction.FORWARD);
+		leftAntiSlip.setDirection(CRServo.Direction.REVERSE);
+		rightAntiSlip.setDirection(CRServo.Direction.FORWARD);
 		combine.setDirection(CRServo.Direction.FORWARD);
 
 		leftArmLinear.setPower(0);
@@ -126,35 +134,56 @@ public class DriverOP extends LinearOpMode
 		// run until the end of the match (driver presses STOP)
 		while (opModeIsActive())
 		{
-			double scale = -1.75f;
-			double drive = scale * 0.45 * -gamepad1.left_stick_y;
-			double turn = scale * 0.35 * gamepad1.right_stick_x;
+			// driver 1 control
+			double cDrive = gamepad1.left_stick_y;
+			double cTurn = gamepad1.right_stick_x;
+			boolean cDriveTurboMode = gamepad1.right_trigger > 0.5;
+			boolean cLinearDown = gamepad1.dpad_up;
+			boolean cLinearUp = gamepad1.dpad_down;
+			boolean cAntiSlipIn = gamepad1.dpad_left;
+			boolean cAntiSlipOut = gamepad1.dpad_right;
+
+			// driver 2 control
+			double cArm = gamepad2.left_stick_y;
+			boolean cArmTurboMode = gamepad2.y;
+			double cRightGripOpen = gamepad2.left_trigger;
+			double cLeftGripOpen = gamepad2.right_trigger;
+			boolean cRightGripClose = gamepad2.left_bumper;
+			boolean cLeftGripClose = gamepad2.right_bumper;
+			boolean cCombineReverse = gamepad2.x;
+			boolean cArmExtend = gamepad2.dpad_down;
+			boolean cArmRetract = gamepad2.dpad_up;
+
+			double scale = cDriveTurboMode ? -2 : -1;
+			double drive = scale * 0.45 * -cDrive;
+			double turn = scale * 0.7 * cTurn;
 
 			double leftPower = Range.clip(drive + turn, -1.0, 1.0);
 			double rightPower = Range.clip(drive - turn, -1.0, 1.0);
-			double leftFPower = Range.clip(-drive - turn, -1.0, 1.0);
-			double rightFPower = Range.clip(-drive + turn, -1.0, 1.0);
+			double leftFPower = Range.clip(-drive, -1.0, 1.0);
+			double rightFPower = Range.clip(-drive, -1.0, 1.0);
 			leftDrive.setPower(leftPower);
 			rightDrive.setPower(rightPower);
 			leftFrontDrive.setPower(leftFPower);
 			rightFrontDrive.setPower(rightFPower);
 
-			leftArm.setPower(gamepad2.left_stick_y / (gamepad2.y ? 1f : 2f));
-			rightArm.setPower(gamepad2.left_stick_y / (gamepad2.y ? 1f : 2f));
+			leftArm.setPower(cArm / (cArmTurboMode ? 1f : 2f));
+			rightArm.setPower(cArm / (cArmTurboMode ? 1f : 2f));
 
-			double linear = gamepad1.dpad_up ? -1 : (gamepad1.dpad_down ? 1 : 0);
+			double linear = cLinearDown ? -1 : (cLinearUp ? 1 : 0);
 			leftLinear.setPower(linear);
 			rightLinear.setPower(linear);
 
-			double leftGripPosition = gamepad2.left_trigger;//Range.clip(1 - gamepad2.left_trigger, 0, 0.6);
-			double rightGripPosition = gamepad2.right_trigger;//Range.clip(1 - gamepad2.right_trigger, 0, 0.6);
+			leftGrip.setPower(cRightGripClose ? 1 : (cRightGripOpen > 0.5 ? -1 : 0));
+			rightGrip.setPower(cLeftGripClose ? -1 : (cLeftGripOpen > 0.5 ? 1 : 0));
 
-			leftGrip.setPower(gamepad2.left_bumper ? 1 : (gamepad2.left_trigger > 0.5 ? -1 : 0));
-			rightGrip.setPower(gamepad2.right_bumper ? -1 : (gamepad2.right_trigger > 0.5 ? 1 : 0));
+			double asPower = cAntiSlipIn ? 1 : (cAntiSlipOut ? -1 : 0);
+			leftAntiSlip.setPower(asPower);
+			rightAntiSlip.setPower(asPower);
 
-			combine.setPower(gamepad2.x ? 1 : -1);
+			combine.setPower(cCombineReverse ? 1 : -1);
 
-			double armLinear = gamepad2.dpad_down ? -1 : (gamepad2.dpad_up ? 1 : 0);
+			double armLinear = cArmExtend ? -1 : (cArmRetract ? 1 : 0);
 			leftArmLinear.setPower(armLinear);
 			rightArmLinear.setPower(armLinear);
 
@@ -162,10 +191,6 @@ public class DriverOP extends LinearOpMode
 			Beam.it("rightPower", rightPower);
 			Beam.it("leftFrontPower", leftFPower);
 			Beam.it("rightFrontPower", rightFPower);
-			Beam.it("linearPower", linear);
-			Beam.it("armPot", gamepad2.left_stick_y / 5f);
-			Beam.it("leftGripPosition", leftGripPosition);
-			Beam.it("rightGripPosition", rightGripPosition);
 			Beam.flush();
 		}
 	}
