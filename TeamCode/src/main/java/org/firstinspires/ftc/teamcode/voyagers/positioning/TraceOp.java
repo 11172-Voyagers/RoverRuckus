@@ -31,9 +31,7 @@ package org.firstinspires.ftc.teamcode.voyagers.positioning;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.teamcode.voyagers.util.Beam;
 
@@ -50,34 +48,17 @@ import org.firstinspires.ftc.teamcode.voyagers.util.Beam;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name = "Driver OP", group = "Linear Opmode")
-public class DriverOP extends LinearOpMode
+@TeleOp(name = "Drive Trace", group = "Linear Opmode")
+public class TraceOp extends LinearOpMode
 {
-	// Declare OpMode members.
-	private ElapsedTime runtime = new ElapsedTime();
 	private DcMotor leftDrive;
 	private DcMotor rightDrive;
 	private DcMotor leftFrontDrive;
 	private DcMotor rightFrontDrive;
-	private DcMotor leftLinear;
-	private DcMotor rightLinear;
-	private DcMotor leftArm;
-	private DcMotor rightArm;
-
-	private CRServo leftGrip;
-	private CRServo rightGrip;
-
-	private CRServo leftAntiSlip;
-	private CRServo rightAntiSlip;
-
-	private CRServo combine;
-	private CRServo leftArmLinear;
-	private CRServo rightArmLinear;
 
 	@Override
 	public void runOpMode()
 	{
-		telemetry.addData("Status", "Initialized");
 		telemetry.update();
 
 		Beam.init(this.telemetry);
@@ -89,20 +70,6 @@ public class DriverOP extends LinearOpMode
 		rightDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
 		leftFrontDrive = hardwareMap.get(DcMotor.class, "left_forward_drive");
 		rightFrontDrive = hardwareMap.get(DcMotor.class, "right_forward_drive");
-		leftLinear = hardwareMap.get(DcMotor.class, "leftLinear");
-		rightLinear = hardwareMap.get(DcMotor.class, "rightLinear");
-		leftArm = hardwareMap.get(DcMotor.class, "leftArm");
-		rightArm = hardwareMap.get(DcMotor.class, "rightArm");
-
-		leftGrip = hardwareMap.get(CRServo.class, "leftGrip");
-		rightGrip = hardwareMap.get(CRServo.class, "rightGrip");
-		combine = hardwareMap.get(CRServo.class, "combine");
-
-		leftAntiSlip = hardwareMap.get(CRServo.class, "leftAntiSlip");
-		rightAntiSlip = hardwareMap.get(CRServo.class, "rightAntiSlip");
-
-		leftArmLinear = hardwareMap.get(CRServo.class, "leftArmLinear");
-		rightArmLinear = hardwareMap.get(CRServo.class, "rightArmLinear");
 
 		// Most robots need the motor on one side to be reversed to drive forward
 		// Reverse the motor that runs backwards when connected directly to the battery
@@ -111,48 +78,21 @@ public class DriverOP extends LinearOpMode
 		leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
 		rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
 
-		leftLinear.setDirection(DcMotor.Direction.FORWARD);
-		rightLinear.setDirection(DcMotor.Direction.REVERSE);
-		leftArm.setDirection(DcMotor.Direction.FORWARD);
-		rightArm.setDirection(DcMotor.Direction.REVERSE);
-		leftArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-		rightArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-		leftArmLinear.setDirection(CRServo.Direction.REVERSE);
-		rightArmLinear.setDirection(CRServo.Direction.FORWARD);
-		leftAntiSlip.setDirection(CRServo.Direction.REVERSE);
-		rightAntiSlip.setDirection(CRServo.Direction.FORWARD);
-		combine.setDirection(CRServo.Direction.FORWARD);
-
-		leftArmLinear.setPower(0);
-		rightArmLinear.setPower(0);
+		leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+		rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+		leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+		rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
 		// Wait for the game to start (driver presses PLAY)
 		waitForStart();
-		runtime.reset();
 
 		// run until the end of the match (driver presses STOP)
 		while (opModeIsActive())
 		{
 			// driver 1 control
-			double cDrive = gamepad1.left_stick_y;
-			double cTurn = gamepad1.right_stick_x;
+			double cDrive = gamepad1.dpad_up ? -0.1 : gamepad1.dpad_down ? 0.1 : 0;
+			double cTurn = gamepad1.dpad_right ? 0.1 : gamepad1.dpad_left ? -0.1 : 0;
 			boolean cDriveTurboMode = gamepad1.right_trigger > 0.5;
-			boolean cLinearDown = gamepad1.dpad_up;
-			boolean cLinearUp = gamepad1.dpad_down;
-			boolean cAntiSlipIn = gamepad1.dpad_left;
-			boolean cAntiSlipOut = gamepad1.dpad_right;
-
-			// driver 2 control
-			double cArm = gamepad2.left_stick_y;
-			boolean cArmTurboMode = gamepad2.y;
-			double cRightGripOpen = gamepad2.left_trigger;
-			double cLeftGripOpen = gamepad2.right_trigger;
-			boolean cRightGripClose = gamepad2.left_bumper;
-			boolean cLeftGripClose = gamepad2.right_bumper;
-			boolean cCombineReverse = gamepad2.x;
-			boolean cArmExtend = gamepad2.dpad_down;
-			boolean cArmRetract = gamepad2.dpad_up;
 
 			double scale = cDriveTurboMode ? -2 : -1;
 			double drive = scale * 0.45 * -cDrive;
@@ -167,32 +107,10 @@ public class DriverOP extends LinearOpMode
 			leftFrontDrive.setPower(leftFPower);
 			rightFrontDrive.setPower(rightFPower);
 
-			leftArm.setPower(cArm / (cArmTurboMode ? 1f : 2f));
-			rightArm.setPower(cArm / (cArmTurboMode ? 1f : 2f));
-
-			double linear = cLinearDown ? -1 : (cLinearUp ? 1 : 0);
-			leftLinear.setPower(linear);
-			rightLinear.setPower(linear);
-
-			leftGrip.setPower(cRightGripClose ? 1 : (cRightGripOpen > 0.5 ? -1 : 0));
-			rightGrip.setPower(cLeftGripClose ? -1 : (cLeftGripOpen > 0.5 ? 1 : 0));
-
-			double asPower = cAntiSlipIn ? 1 : (cAntiSlipOut ? -1 : 0);
-			leftAntiSlip.setPower(asPower);
-			rightAntiSlip.setPower(asPower);
-
-			combine.setPower(cCombineReverse ? 1 : -1);
-
-			double armLinear = cArmExtend ? -1 : (cArmRetract ? 1 : 0);
-			leftArmLinear.setPower(armLinear);
-			rightArmLinear.setPower(armLinear);
-
-			Beam.it("leftPower", leftPower);
-			Beam.it("rightPower", rightPower);
-			Beam.it("leftFrontPower", leftFPower);
-			Beam.it("rightFrontPower", rightFPower);
-			Beam.it("lal pos", leftLinear.getCurrentPosition());
-			Beam.it("lar pos", rightLinear.getCurrentPosition());
+			Beam.it("LF", leftFrontDrive.getCurrentPosition());
+			Beam.it("LB", leftDrive.getCurrentPosition());
+			Beam.it("RF", rightFrontDrive.getCurrentPosition());
+			Beam.it("RB", rightDrive.getCurrentPosition());
 			Beam.flush();
 		}
 	}

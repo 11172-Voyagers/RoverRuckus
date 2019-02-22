@@ -168,7 +168,8 @@ public class VuNav extends LinearOpMode
 		int countLeft = 0;
 		int countCenter = 0;
 		int countRight = 0;
-		boolean recognize = false;
+		boolean recognize = true;
+		int minerals = 0;
 
 		while (opModeIsActive())
 		{
@@ -177,7 +178,7 @@ public class VuNav extends LinearOpMode
 			List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
 			if (updatedRecognitions != null && recognize)
 			{
-				telemetry.addData("Minerals: ", updatedRecognitions.size());
+				minerals = updatedRecognitions.size();
 
 				if (updatedRecognitions.size() == 2)
 				{
@@ -199,76 +200,78 @@ public class VuNav extends LinearOpMode
 					{
 						if (goldMineralX < silverMineral1X)
 						{
-							telemetry.addData("Gold Mineral Position", "Left");
-							countLeft++;
+							telemetry.addData("Gold Mineral Position", "Center");
+							countCenter++;
 						}
 						else
 						{
-							telemetry.addData("Gold Mineral Position", "Center");
-							countCenter++;
+							telemetry.addData("Gold Mineral Position", "Right");
+							countRight++;
 						}
 					}
 					else if (goldMineralX == -1)
 					{
-						telemetry.addData("Gold Mineral Position", "Right");
-						countRight++;
+						telemetry.addData("Gold Mineral Position", "Left");
+						countLeft++;
 					}
 				}
 			}
 
-			if (System.currentTimeMillis() - startTime < 1925)
-			{
-				telemetry.addData("Recognition:", "Off");
-				leftLinear.setPower(1);
-				rightLinear.setPower(1);
-			}
-			else if (System.currentTimeMillis() - startTime < 2100)
-			{
-				rightFrontDrive.setPower(0.7);
-				rightDrive.setPower(-0.7);
-			}
-			else
-			{
-				recognize = true;
-				telemetry.addData("Recognition:", "Recognizing");
-				leftLinear.setPower(0);
-				rightLinear.setPower(0);
-				rightFrontDrive.setPower(0);
-				rightDrive.setPower(0);
-			}
+			telemetry.addData("Minerals: ", minerals);
 
-			if (System.currentTimeMillis() - startTime > 5000 && System.currentTimeMillis() - startTime < 7500)
-			{
-				recognize = false;
-				telemetry.addData("Recognition:", "Off");
-				int direction = Math.max(Math.max(countLeft, countCenter), countRight);
-				double scaleLeft = 1;
-				double scaleRight = 1;
-				if (direction == countLeft)
-				{
-					scaleLeft = 0.3;
-					telemetry.addData("Gold Mineral Position", "Left");
-				}
-				else if (direction == countRight)
-				{
-					scaleRight = 0.3;
-					telemetry.addData("Gold Mineral Position", "Right");
-				}
-				else
-					telemetry.addData("Gold Mineral Position", "Center");
-
-				leftFrontDrive.setPower(0.7 * scaleLeft);
-				leftDrive.setPower(-1 * scaleLeft);
-				rightFrontDrive.setPower(0.7 * scaleRight);
-				rightDrive.setPower(-0.7 * scaleRight);
-			}
-			else
-			{
-				leftFrontDrive.setPower(0);
-				rightFrontDrive.setPower(0);
-				leftDrive.setPower(0);
-				rightDrive.setPower(0);
-			}
+			//			if (System.currentTimeMillis() - startTime < 1925)
+			//			{
+			//				telemetry.addData("Recognition:", "Off");
+			//				leftLinear.setPower(1);
+			//				rightLinear.setPower(1);
+			//			}
+			//			else if (System.currentTimeMillis() - startTime < 2100)
+			//			{
+			//				rightFrontDrive.setPower(0.7);
+			//				rightDrive.setPower(-0.7);
+			//			}
+			//			else
+			//			{
+			//				recognize = true;
+			//				telemetry.addData("Recognition:", "Recognizing");
+			//				leftLinear.setPower(0);
+			//				rightLinear.setPower(0);
+			//				rightFrontDrive.setPower(0);
+			//				rightDrive.setPower(0);
+			//			}
+			//
+			//			if (System.currentTimeMillis() - startTime > 5000 && System.currentTimeMillis() - startTime < 7500)
+			//			{
+			//				recognize = false;
+			//				telemetry.addData("Recognition:", "Off");
+			//				int direction = Math.max(Math.max(countLeft, countCenter), countRight);
+			//				double scaleLeft = 1;
+			//				double scaleRight = 1;
+			//				if (direction == countLeft)
+			//				{
+			//					scaleLeft = 0.3;
+			//					telemetry.addData("Gold Mineral Position", "Left");
+			//				}
+			//				else if (direction == countRight)
+			//				{
+			//					scaleRight = 0.3;
+			//					telemetry.addData("Gold Mineral Position", "Right");
+			//				}
+			//				else
+			//					telemetry.addData("Gold Mineral Position", "Center");
+			//
+			//				leftFrontDrive.setPower(0.7 * scaleLeft);
+			//				leftDrive.setPower(-1 * scaleLeft);
+			//				rightFrontDrive.setPower(0.7 * scaleRight);
+			//				rightDrive.setPower(-0.7 * scaleRight);
+			//			}
+			//			else
+			//			{
+			//				leftFrontDrive.setPower(0);
+			//				rightFrontDrive.setPower(0);
+			//				leftDrive.setPower(0);
+			//				rightDrive.setPower(0);
+			//			}
 
 			telemetry.addData("Left", countLeft);
 			telemetry.addData("Center", countCenter);
