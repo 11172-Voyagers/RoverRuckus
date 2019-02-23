@@ -18,8 +18,8 @@ import java.util.List;
 
 import static org.firstinspires.ftc.robotcore.external.tfod.TfodRoverRuckus.*;
 
-@Autonomous(name = "AutoCrater", group = "Concept")
-public class AutoCrater extends LinearOpMode
+@Autonomous(name = "AutoDepot", group = "Concept")
+public class AutoDepot extends LinearOpMode
 {
 	private DcMotor leftDrive;
 	private DcMotor rightDrive;
