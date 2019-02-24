@@ -18,8 +18,8 @@ import java.util.List;
 
 import static org.firstinspires.ftc.robotcore.external.tfod.TfodRoverRuckus.*;
 
-@Autonomous(name = "AutoDepot", group = "Concept")
-public class AutoDepot extends LinearOpMode
+@Autonomous(name = "AutoCrater", group = "Concept")
+public class AutoCrater extends LinearOpMode
 {
 	private DcMotor leftDrive;
 	private DcMotor rightDrive;
@@ -185,32 +185,20 @@ public class AutoDepot extends LinearOpMode
 			float turn = 0;
 			if (direction == countLeft)
 			{
-				turn = -0.6f;
+				turn = -0.57f;
 			}
 			else if (direction == countRight)
 			{
-				turn = 0.6f;
+				turn = 0.57f;
 			}
 
 			drive(-1, -1.5f * turn, false);
 		}));
 
 		// halt
-		events.add(new TimelineEvent(12800, (o) -> {
+		events.add(new TimelineEvent(12000, (o) -> {
 			status("Halt");
 			drive(0, 0, false);
-		}));
-
-		// halt
-		events.add(new TimelineEvent(13600, (o) -> {
-			status("marker out");
-			marker.setPower(1);
-		}));
-
-		// halt
-		events.add(new TimelineEvent(14000, (o) -> {
-			status("marker stop");
-			marker.setPower(0);
 		}));
 
 		t = new Timeline(events);
@@ -334,7 +322,7 @@ public class AutoDepot extends LinearOpMode
 
 		TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters();
 		tfodParameters.useObjectTracker = false;
-		tfodParameters.minimumConfidence = 0.55;
+		tfodParameters.minimumConfidence = 0.3;
 		tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
 		tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
 	}
